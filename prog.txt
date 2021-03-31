@@ -1,0 +1,16 @@
+int a = 4;
+float f = 2.5;
+
+setup {
+	int a = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
+}
+
+loop {
+	a = a + 1;
+	run test();
+}
+
+int test() {
+	float t = 13.37;
+
+}

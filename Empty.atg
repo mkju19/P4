@@ -6,12 +6,13 @@ COMPILER ALELA
 // If you want your generated compiler case insensitive add the
 // keyword IGNORECASE here.
 
-	public Prog ProgramAST;
+	//public Prog ProgramAST;
 
 CHARACTERS
 // Add character set declarations here.
 // Examples:
    digit = "0123456789".
+   letter = 'a'..'z' + 'A'..'Z'.
    identifier = 'a'..'e' + 'g'..'h' + 'j'..'o' + 'q'..'z'.
    cr = '\r'.
    lt = '\t'.
@@ -23,14 +24,9 @@ TOKENS
 // Example:
 //   id = letter {letter | digit}.
    
-   plus = '+'.
-   minus = '-'.
-   floatdcl = 'f'.
-   intdcl = 'i'.
-   print = 'p'.
-   inum = digit {digit}.
-   fnum = digit {digit} '.' digit {digit}.
-   id = identifier.
+   number = digit {digit} ['.' digit {digit}].
+   id = letter {letter | digit}.
+   newline = lf.
 	
 
 
@@ -50,7 +46,7 @@ PRAGMAS
 // Set the ignored characters (whitespaces) here, the blank character is
 // ignored by default.
 // Example, add line breaks to the ignore set.
-   IGNORE cr + lf + lt
+   IGNORE cr + lf+ lt
 
 
 PRODUCTIONS
@@ -61,24 +57,158 @@ PRODUCTIONS
 //   AC = "BEGIN" { Statement } "END".
 //   Statement = ident "=" number { "+" number } .
 
-	 AC (. List<AST> liste = new List<AST>(); SymDeclaring e; AST e2;.)
-	 = dcl <out e> (. liste.Add(e); .) { dcl <out e> (. liste.Add(e); .) } {stmt <out e2> (. liste.Add(e2); .)} (. ProgramAST = new Prog(liste);.).
-	 
-	 dcl <out SymDeclaring e> (. e = null; .)
-	 = floatdcl id (. e = new FloatDcl(t.val); .)
-	 | intdcl id (. e = new IntDcl(t.val); .).
-	 
-	 stmt <out AST e> (. e = null; AST v = null; .) //TODO need clerafication
-	 = id (. String symref = t.val; .) '=' val <out v> (. e = new Assigning(symref, v); .) [ (. Expression e2; .) expr <out e2, v> (. e = new Assigning(symref, e2); .) ] 
-	 | print id (. e = new Printing(t.val); .).
-	 
-	 val <out AST e> (. e = null; .)
-	 = inum (. e = new IntConsting(t.val); .)
-	 | fnum (. e = new FloatConsting(t.val); .)
-	 | id (. e = new SymReferencing(t.val); .).
-	 
-	 expr <out Expression e, AST v> (. string op = null; AST e2; Expression e3 = null; .)
-	 = (plus (. op = "+"; .) | minus (. op = "-"; .) ) val <out e2> (. e = new Expression(op, v, e2); .) [expr <out e3, e2> (. e = new Expression(op, v, e3); .)] .
+	ALELA
+	= DECL {DECL} SETUP LOOP [FUNCDECLS].
+    
+	DECL
+	= TYPE ASSIG.
+
+	SETUP
+	= "setup" BLOCK.
+
+	ASSIG
+	= id '=' EXPR ';'.
+
+	/*STRUCTDEF
+	= "struct" STRUCTID '{' STRUCTFIELDS '}'.
+
+	STRUCTFIELDS
+	= STRUCTFIELD [ STRUCTFIELDS].
+	
+	STRUCTFIELD 
+	= TYPE id ';'
+	| FUNC.
+    
+	STRUCTDECL 
+	= STRUCTID id '=' '{' FIELDINITS '}'.
+
+	FIELDINITS 
+	= FIELDINIT [',' FIELDINITS].
+    
+	FIELDINIT 
+	= id '=' expr.
+
+	STRUCTID 
+	= id.*/
+
+	LOOP 
+	= "loop" BLOCK.
+
+	BLOCK 
+	= '{' STMTS '}'.
+
+	STMTS 
+	= STMT [STMTS].
+
+	STMT 
+	= "if(" LOGI_EXPR ')' BLOCK ELSESTMT
+	| "while(" LOGI_EXPR ')' BLOCK
+    | "for(" VALUE "to" VALUE ')' BLOCK
+    | "switch(" id ')' '{' CASELIST '}'
+    | "Delay(" VALUE ')'
+    | "Timer(" VALUE ')'
+    | ASSIG
+    | DECL
+    | "run" FUNC.
+
+	VALUE
+	= number
+	| id.
+
+	FUNC 
+	= id'(' [INPARAM_LIST] ')' ';'.
+
+	INPARAM_LIST 
+	= VALUE [',' INPARAM_LIST].
+
+	FUNCDECLS 
+	= FUNCDECL [FUNCDECLS].
+
+	FUNCDECL 
+	= TYPE id '(' [FUNCARG_LIST] ')' BLOCK.
+
+	FUNCARG_LIST 
+	= FUNCARG [ ',' FUNCARG_LIST].
+    
+	FUNCARG 
+	= TYPE id.
+    
+	ELSESTMT 
+	= "else" ELSEIF.
+    
+	ELSEIF
+	= "if" '(' LOGI_EXPR ')' BLOCK 
+	| BLOCK.
+    
+	CASELIST 
+	= "case" id ':' BLOCK [ CASELIST]
+	| "default" ':' BLOCK.
+
+
+	LOGI_EXPR
+	= LOGI_AND [LOGI_OR].
+	
+	LOGI_OR
+	= "||" LOGI_EXPR.
+	
+	LOGI_AND
+	= LOGI_EQUAL [LOGI_ANDOp].
+
+	LOGI_ANDOp
+	= "&" LOGI_EQUAL.
+	
+	LOGI_EQUAL
+	= LOGI_LG [LOGI_EQUALOp].
+
+	LOGI_EQUALOp
+	= ( "==" | "!=" ) LOGI_LG.
+	
+	LOGI_LG
+	= LOGI_NOT [LOGI_LGOp].
+	
+	LOGI_LGOp
+	= ( ">=" | '>' | "<=" | '<' ) LOGI_NOT.
+	
+	LOGI_NOT
+	= '!' LOGI_NOT 
+	| LOGI_TERM.
+	
+	LOGI_TERM
+	= '(' LOGI_EXPR ')'
+	| VALUE.
+
+	EXPR
+	= multExpr [addExpr].
+
+	addExpr
+	= ( '+' | '-' ) EXPR.
+
+	multExpr 
+	= terminalExpr [multExprOp].
+
+	multExprOp
+	= ( '*' | '/' | '%' ) multExpr.
+
+	terminalExpr 
+	= VALUE 
+	| '(' EXPR ')'.
+
+	/*LIST 
+	= "List<" TYPE '>' id '=' '{' LISTASSIGNS '}'.
+
+	LISTASSIGNS 
+	= LISTASSIGN [',' LISTASSIGNS].
+
+	LISTASSIGN 
+	= VALUE.*/
+
+	TYPE 
+	= "void"
+	| "int"
+    | "float"
+    | "double"
+    | "string"
+    | "boolean".
 
 // End of your compiler specification, make sure the name here matches
 // the grammar name at the start of this grammar.
