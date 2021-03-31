@@ -1,0 +1,85 @@
+// Set the name of your grammar here (and at the end of this grammar):
+COMPILER ALELA
+
+// Add auxiliary methods and declaration here.
+
+// If you want your generated compiler case insensitive add the
+// keyword IGNORECASE here.
+
+	public Prog ProgramAST;
+
+CHARACTERS
+// Add character set declarations here.
+// Examples:
+   digit = "0123456789".
+   identifier = 'a'..'e' + 'g'..'h' + 'j'..'o' + 'q'..'z'.
+   cr = '\r'.
+   lt = '\t'.
+   lf = '\n'.
+
+
+TOKENS
+// Add token declarations here.
+// Example:
+//   id = letter {letter | digit}.
+   
+   plus = '+'.
+   minus = '-'.
+   floatdcl = 'f'.
+   intdcl = 'i'.
+   print = 'p'.
+   inum = digit {digit}.
+   fnum = digit {digit} '.' digit {digit}.
+   id = identifier.
+	
+
+
+PRAGMAS
+// Add pragma declarations here.
+// Example:
+//   switch = '$' { digit | letter }. (. Optional semantic action .)
+
+
+// Add comments here.
+// Example for a multi-line block comment:
+//   COMMENTS FROM "/*" TO "*/" NESTED
+// Example for a single line comment:
+//   COMMENTS FROM "//" TO lf
+
+
+// Set the ignored characters (whitespaces) here, the blank character is
+// ignored by default.
+// Example, add line breaks to the ignore set.
+   IGNORE cr + lf + lt
+
+
+PRODUCTIONS
+
+// Add your productions here, one must have the same name as the grammar,
+// it will be the start symbol (entry point of your compiler).
+// Example:
+//   AC = "BEGIN" { Statement } "END".
+//   Statement = ident "=" number { "+" number } .
+
+	 AC (. List<AST> liste = new List<AST>(); SymDeclaring e; AST e2;.)
+	 = dcl <out e> (. liste.Add(e); .) { dcl <out e> (. liste.Add(e); .) } {stmt <out e2> (. liste.Add(e2); .)} (. ProgramAST = new Prog(liste);.).
+	 
+	 dcl <out SymDeclaring e> (. e = null; .)
+	 = floatdcl id (. e = new FloatDcl(t.val); .)
+	 | intdcl id (. e = new IntDcl(t.val); .).
+	 
+	 stmt <out AST e> (. e = null; AST v = null; .) //TODO need clerafication
+	 = id (. String symref = t.val; .) '=' val <out v> (. e = new Assigning(symref, v); .) [ (. Expression e2; .) expr <out e2, v> (. e = new Assigning(symref, e2); .) ] 
+	 | print id (. e = new Printing(t.val); .).
+	 
+	 val <out AST e> (. e = null; .)
+	 = inum (. e = new IntConsting(t.val); .)
+	 | fnum (. e = new FloatConsting(t.val); .)
+	 | id (. e = new SymReferencing(t.val); .).
+	 
+	 expr <out Expression e, AST v> (. string op = null; AST e2; Expression e3 = null; .)
+	 = (plus (. op = "+"; .) | minus (. op = "-"; .) ) val <out e2> (. e = new Expression(op, v, e2); .) [expr <out e3, e2> (. e = new Expression(op, v, e3); .)] .
+
+// End of your compiler specification, make sure the name here matches
+// the grammar name at the start of this grammar.
+END ALELA.
