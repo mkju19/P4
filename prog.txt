@@ -7,7 +7,7 @@ setup {
 
 loop {
 	a = a + 1;
-	run test();
+	test();
 }
 
 int test() {

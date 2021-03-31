@@ -10,7 +10,7 @@ public class Parser {
 	public const int _number = 1;
 	public const int _id = 2;
 	public const int _newline = 3;
-	public const int maxT = 46;
+	public const int maxT = 45;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -96,6 +96,7 @@ public class Parser {
 
 	void DECL() {
 		TYPE();
+		Expect(2);
 		ASSIG();
 	}
 
@@ -118,6 +119,10 @@ public class Parser {
 
 	void TYPE() {
 		switch (la.kind) {
+		case 39: {
+			Get();
+			break;
+		}
 		case 40: {
 			Get();
 			break;
@@ -138,16 +143,11 @@ public class Parser {
 			Get();
 			break;
 		}
-		case 45: {
-			Get();
-			break;
-		}
-		default: SynErr(47); break;
+		default: SynErr(46); break;
 		}
 	}
 
 	void ASSIG() {
-		Expect(2);
 		Expect(5);
 		EXPR();
 		Expect(6);
@@ -161,7 +161,7 @@ public class Parser {
 
 	void EXPR() {
 		multExpr();
-		if (la.kind == 35 || la.kind == 36) {
+		if (la.kind == 34 || la.kind == 35) {
 			addExpr();
 		}
 	}
@@ -221,31 +221,27 @@ public class Parser {
 			break;
 		}
 		case 2: {
-			ASSIG();
+			Get();
+			CALL();
 			break;
 		}
-		case 40: case 41: case 42: case 43: case 44: case 45: {
+		case 39: case 40: case 41: case 42: case 43: case 44: {
 			DECL();
 			break;
 		}
-		case 18: {
-			Get();
-			FUNC();
-			break;
-		}
-		default: SynErr(48); break;
+		default: SynErr(47); break;
 		}
 	}
 
 	void LOGI_EXPR() {
 		LOGI_AND();
-		if (la.kind == 26) {
+		if (la.kind == 25) {
 			LOGI_OR();
 		}
 	}
 
 	void ELSESTMT() {
-		Expect(21);
+		Expect(20);
 		ELSEIF();
 	}
 
@@ -254,37 +250,45 @@ public class Parser {
 			Get();
 		} else if (la.kind == 2) {
 			Get();
-		} else SynErr(49);
+		} else SynErr(48);
 	}
 
 	void CASELIST() {
-		if (la.kind == 23) {
+		if (la.kind == 22) {
 			Get();
 			Expect(2);
-			Expect(24);
+			Expect(23);
 			BLOCK();
-			if (la.kind == 23 || la.kind == 25) {
+			if (la.kind == 22 || la.kind == 24) {
 				CASELIST();
 			}
-		} else if (la.kind == 25) {
+		} else if (la.kind == 24) {
 			Get();
-			Expect(24);
+			Expect(23);
 			BLOCK();
+		} else SynErr(49);
+	}
+
+	void CALL() {
+		if (la.kind == 18) {
+			FUNC();
+		} else if (la.kind == 5) {
+			ASSIG();
 		} else SynErr(50);
 	}
 
 	void FUNC() {
-		Expect(2);
-		Expect(19);
+		Expect(18);
 		if (la.kind == 1 || la.kind == 2) {
 			INPARAM_LIST();
 		}
 		Expect(11);
+		Expect(6);
 	}
 
 	void INPARAM_LIST() {
 		VALUE();
-		if (la.kind == 20) {
+		if (la.kind == 19) {
 			Get();
 			INPARAM_LIST();
 		}
@@ -293,7 +297,7 @@ public class Parser {
 	void FUNCDECL() {
 		TYPE();
 		Expect(2);
-		Expect(19);
+		Expect(18);
 		if (StartOf(1)) {
 			FUNCARG_LIST();
 		}
@@ -303,7 +307,7 @@ public class Parser {
 
 	void FUNCARG_LIST() {
 		FUNCARG();
-		if (la.kind == 20) {
+		if (la.kind == 19) {
 			Get();
 			FUNCARG_LIST();
 		}
@@ -315,9 +319,9 @@ public class Parser {
 	}
 
 	void ELSEIF() {
-		if (la.kind == 22) {
+		if (la.kind == 21) {
 			Get();
-			Expect(19);
+			Expect(18);
 			LOGI_EXPR();
 			Expect(11);
 			BLOCK();
@@ -328,25 +332,25 @@ public class Parser {
 
 	void LOGI_AND() {
 		LOGI_EQUAL();
-		if (la.kind == 27) {
+		if (la.kind == 26) {
 			LOGI_ANDOp();
 		}
 	}
 
 	void LOGI_OR() {
-		Expect(26);
+		Expect(25);
 		LOGI_EXPR();
 	}
 
 	void LOGI_EQUAL() {
 		LOGI_LG();
-		if (la.kind == 28 || la.kind == 29) {
+		if (la.kind == 27 || la.kind == 28) {
 			LOGI_EQUALOp();
 		}
 	}
 
 	void LOGI_ANDOp() {
-		Expect(27);
+		Expect(26);
 		LOGI_EQUAL();
 	}
 
@@ -358,38 +362,38 @@ public class Parser {
 	}
 
 	void LOGI_EQUALOp() {
-		if (la.kind == 28) {
+		if (la.kind == 27) {
 			Get();
-		} else if (la.kind == 29) {
+		} else if (la.kind == 28) {
 			Get();
 		} else SynErr(52);
 		LOGI_LG();
 	}
 
 	void LOGI_NOT() {
-		if (la.kind == 34) {
+		if (la.kind == 33) {
 			Get();
 			LOGI_NOT();
-		} else if (la.kind == 1 || la.kind == 2 || la.kind == 19) {
+		} else if (la.kind == 1 || la.kind == 2 || la.kind == 18) {
 			LOGI_TERM();
 		} else SynErr(53);
 	}
 
 	void LOGI_LGOp() {
-		if (la.kind == 30) {
+		if (la.kind == 29) {
+			Get();
+		} else if (la.kind == 30) {
 			Get();
 		} else if (la.kind == 31) {
 			Get();
 		} else if (la.kind == 32) {
-			Get();
-		} else if (la.kind == 33) {
 			Get();
 		} else SynErr(54);
 		LOGI_NOT();
 	}
 
 	void LOGI_TERM() {
-		if (la.kind == 19) {
+		if (la.kind == 18) {
 			Get();
 			LOGI_EXPR();
 			Expect(11);
@@ -400,15 +404,15 @@ public class Parser {
 
 	void multExpr() {
 		terminalExpr();
-		if (la.kind == 37 || la.kind == 38 || la.kind == 39) {
+		if (la.kind == 36 || la.kind == 37 || la.kind == 38) {
 			multExprOp();
 		}
 	}
 
 	void addExpr() {
-		if (la.kind == 35) {
+		if (la.kind == 34) {
 			Get();
-		} else if (la.kind == 36) {
+		} else if (la.kind == 35) {
 			Get();
 		} else SynErr(56);
 		EXPR();
@@ -417,7 +421,7 @@ public class Parser {
 	void terminalExpr() {
 		if (la.kind == 1 || la.kind == 2) {
 			VALUE();
-		} else if (la.kind == 19) {
+		} else if (la.kind == 18) {
 			Get();
 			EXPR();
 			Expect(11);
@@ -425,11 +429,11 @@ public class Parser {
 	}
 
 	void multExprOp() {
-		if (la.kind == 37) {
+		if (la.kind == 36) {
+			Get();
+		} else if (la.kind == 37) {
 			Get();
 		} else if (la.kind == 38) {
-			Get();
-		} else if (la.kind == 39) {
 			Get();
 		} else SynErr(58);
 		multExpr();
@@ -447,10 +451,10 @@ public class Parser {
 	}
 	
 	static readonly bool[,] set = {
-		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_T,_x,_x},
-		{_x,_x,_T,_x, _x,_x,_x,_x, _x,_x,_T,_x, _T,_T,_x,_T, _T,_T,_T,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_T,_x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x}
+		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_T, _T,_T,_T,_T, _T,_x,_x},
+		{_x,_x,_T,_x, _x,_x,_x,_x, _x,_x,_T,_x, _T,_T,_x,_T, _T,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_T, _T,_T,_T,_T, _T,_x,_x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_T, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x}
 
 	};
 } // end Parser
@@ -482,39 +486,39 @@ public class Errors {
 			case 15: s = "\"switch(\" expected"; break;
 			case 16: s = "\"Delay(\" expected"; break;
 			case 17: s = "\"Timer(\" expected"; break;
-			case 18: s = "\"run\" expected"; break;
-			case 19: s = "\"(\" expected"; break;
-			case 20: s = "\",\" expected"; break;
-			case 21: s = "\"else\" expected"; break;
-			case 22: s = "\"if\" expected"; break;
-			case 23: s = "\"case\" expected"; break;
-			case 24: s = "\":\" expected"; break;
-			case 25: s = "\"default\" expected"; break;
-			case 26: s = "\"||\" expected"; break;
-			case 27: s = "\"&\" expected"; break;
-			case 28: s = "\"==\" expected"; break;
-			case 29: s = "\"!=\" expected"; break;
-			case 30: s = "\">=\" expected"; break;
-			case 31: s = "\">\" expected"; break;
-			case 32: s = "\"<=\" expected"; break;
-			case 33: s = "\"<\" expected"; break;
-			case 34: s = "\"!\" expected"; break;
-			case 35: s = "\"+\" expected"; break;
-			case 36: s = "\"-\" expected"; break;
-			case 37: s = "\"*\" expected"; break;
-			case 38: s = "\"/\" expected"; break;
-			case 39: s = "\"%\" expected"; break;
-			case 40: s = "\"void\" expected"; break;
-			case 41: s = "\"int\" expected"; break;
-			case 42: s = "\"float\" expected"; break;
-			case 43: s = "\"double\" expected"; break;
-			case 44: s = "\"string\" expected"; break;
-			case 45: s = "\"boolean\" expected"; break;
-			case 46: s = "??? expected"; break;
-			case 47: s = "invalid TYPE"; break;
-			case 48: s = "invalid STMT"; break;
-			case 49: s = "invalid VALUE"; break;
-			case 50: s = "invalid CASELIST"; break;
+			case 18: s = "\"(\" expected"; break;
+			case 19: s = "\",\" expected"; break;
+			case 20: s = "\"else\" expected"; break;
+			case 21: s = "\"if\" expected"; break;
+			case 22: s = "\"case\" expected"; break;
+			case 23: s = "\":\" expected"; break;
+			case 24: s = "\"default\" expected"; break;
+			case 25: s = "\"||\" expected"; break;
+			case 26: s = "\"&\" expected"; break;
+			case 27: s = "\"==\" expected"; break;
+			case 28: s = "\"!=\" expected"; break;
+			case 29: s = "\">=\" expected"; break;
+			case 30: s = "\">\" expected"; break;
+			case 31: s = "\"<=\" expected"; break;
+			case 32: s = "\"<\" expected"; break;
+			case 33: s = "\"!\" expected"; break;
+			case 34: s = "\"+\" expected"; break;
+			case 35: s = "\"-\" expected"; break;
+			case 36: s = "\"*\" expected"; break;
+			case 37: s = "\"/\" expected"; break;
+			case 38: s = "\"%\" expected"; break;
+			case 39: s = "\"void\" expected"; break;
+			case 40: s = "\"int\" expected"; break;
+			case 41: s = "\"float\" expected"; break;
+			case 42: s = "\"double\" expected"; break;
+			case 43: s = "\"string\" expected"; break;
+			case 44: s = "\"boolean\" expected"; break;
+			case 45: s = "??? expected"; break;
+			case 46: s = "invalid TYPE"; break;
+			case 47: s = "invalid STMT"; break;
+			case 48: s = "invalid VALUE"; break;
+			case 49: s = "invalid CASELIST"; break;
+			case 50: s = "invalid CALL"; break;
 			case 51: s = "invalid ELSEIF"; break;
 			case 52: s = "invalid LOGI_EQUALOp"; break;
 			case 53: s = "invalid LOGI_NOT"; break;
