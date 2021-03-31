@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31019.35
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cocor_compiler", "cocor_compiler.csproj", "{8966E64F-DD07-434D-9FA1-38DD7BC8A04C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8966E64F-DD07-434D-9FA1-38DD7BC8A04C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8966E64F-DD07-434D-9FA1-38DD7BC8A04C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8966E64F-DD07-434D-9FA1-38DD7BC8A04C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8966E64F-DD07-434D-9FA1-38DD7BC8A04C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {25EF6658-D07C-4127-87A9-FE37AB8B3E98}
+	EndGlobalSection
+EndGlobal

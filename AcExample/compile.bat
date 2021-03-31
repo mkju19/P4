@@ -1,0 +1,1 @@
+coco Empty.atg -namespace "cocor_compiler"
