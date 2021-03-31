@@ -1,5 +1,5 @@
 // Set the name of your grammar here (and at the end of this grammar):
-COMPILER Empty
+COMPILER Alela
 
 // Add auxiliary methods and declaration here.
 
@@ -20,10 +20,11 @@ CHARACTERS
 TOKENS
 // Add token declarations here.
 // Example:
-   ident = letter {letter | digit}.
-   number = digit {digit}.
+   
+   ID = letter {letter | digit}.
+   NUM = digit {digit}.
 
-
+   
 PRAGMAS
 // Add pragma declarations here.
 // Example:
@@ -48,13 +49,47 @@ PRODUCTIONS
 // Add your productions here, one must have the same name as the grammar,
 // it will be the start symbol (entry point of your compiler).
 // Example:
-   Empty = "BEGIN" { Statement } "END".
-   Statement = ident "=" number { "+" number } .
+//   Empty = "BEGIN" { Statement } "END".
+//   Statement = ident "=" number { "+" number } .
 
-Empty=
+Alela = dcls
+.
+
+dcls = dcl [dcls]
+.
+
+dcl = type assig
+.
+
+assig = ID '=' expr
+.
+
+expr = addExpr 
+.
+
+addExpr = multExpr [addExprOp]
+addExprOp = '+' addExpr  | '-' addExpr
+.
+
+multExpr = terminalExpr [multExprOp]
+multExprOp = '*' multExpr  | '/' multExpr
+.
+
+terminalExpr = value | '(' expr ')'
+.
+
+value = NUM | ID
+.
+
+type = "void"
+     | "int"
+     | "float"
+     | "double"
+     | "string"
+     | "boolean"
 .
 
 // End of your compiler specification, make sure the name here matches
 // the grammar name at the start of this grammar.
-END Empty.
+END Alela.
 

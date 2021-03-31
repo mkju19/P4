@@ -1,4 +1,5 @@
 ﻿using System;
+using cocor_compiler;
 
 namespace ALELA
 {
@@ -6,7 +7,11 @@ namespace ALELA
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            string file = "./prog.txt";
+            Scanner scanner = new Scanner(file);
+            Parser parser = new Parser(scanner);
+            parser.Parse();
+            Console.WriteLine($" {parser.errors.count} errors detected");
         }
     }
 }
