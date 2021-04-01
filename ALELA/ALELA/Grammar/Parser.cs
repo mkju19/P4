@@ -1,7 +1,7 @@
 
 using System;
 
-namespace cocor_compiler {
+namespace alela {
 
 
 
@@ -10,7 +10,6 @@ public class Parser {
 	public const int _ID = 1;
 	public const int _NUM = 2;
 	public const int maxT = 16;
-	public const int _switch = 17;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -45,9 +44,6 @@ public class Parser {
 			t = la;
 			la = scanner.Scan();
 			if (la.kind <= maxT) { ++errDist; break; }
-				if (la.kind == 17) {
-				Optional semantic action 
-				}
 
 			la = t;
 		}
@@ -102,33 +98,17 @@ public class Parser {
 	}
 
 	void type() {
-		switch (la.kind) {
-		case 10: {
+		if (la.kind == 11) {
 			Get();
-			break;
-		}
-		case 11: {
+		} else if (la.kind == 12) {
 			Get();
-			break;
-		}
-		case 12: {
+		} else if (la.kind == 13) {
 			Get();
-			break;
-		}
-		case 13: {
+		} else if (la.kind == 14) {
 			Get();
-			break;
-		}
-		case 14: {
+		} else if (la.kind == 15) {
 			Get();
-			break;
-		}
-		case 15: {
-			Get();
-			break;
-		}
-		default: SynErr(17); break;
-		}
+		} else SynErr(17);
 	}
 
 	void assig() {
@@ -142,40 +122,49 @@ public class Parser {
 	}
 
 	void addExpr() {
-		if (la.kind == 1 || la.kind == 2 || la.kind == 8) {
-			multExpr();
-			Expect(4);
-			addExpr();
-		} else if (la.kind == 1 || la.kind == 2 || la.kind == 8) {
-			multExpr();
-			Expect(5);
-			addExpr();
-		} else if (la.kind == 1 || la.kind == 2 || la.kind == 8) {
-			multExpr();
-		} else SynErr(18);
+		multExpr();
+		if (la.kind == 4 || la.kind == 5) {
+			addExprOp();
+		}
 	}
 
 	void multExpr() {
-		if (la.kind == 1 || la.kind == 2 || la.kind == 8) {
-			terminalExpr();
-			Expect(6);
-			multExpr();
-		} else if (la.kind == 1 || la.kind == 2 || la.kind == 8) {
-			terminalExpr();
-			Expect(7);
-			multExpr();
-		} else if (la.kind == 1 || la.kind == 2) {
-			value();
-		} else SynErr(19);
+		terminalExpr();
+		if (la.kind == 6 || la.kind == 7 || la.kind == 8) {
+			multExprOp();
+		}
+	}
+
+	void addExprOp() {
+		if (la.kind == 4) {
+			Get();
+			addExpr();
+		} else if (la.kind == 5) {
+			Get();
+			addExpr();
+		} else SynErr(18);
 	}
 
 	void terminalExpr() {
 		if (la.kind == 1 || la.kind == 2) {
 			value();
-		} else if (la.kind == 8) {
+		} else if (la.kind == 9) {
 			Get();
 			expr();
-			Expect(9);
+			Expect(10);
+		} else SynErr(19);
+	}
+
+	void multExprOp() {
+		if (la.kind == 6) {
+			Get();
+			multExpr();
+		} else if (la.kind == 7) {
+			Get();
+			multExpr();
+		} else if (la.kind == 8) {
+			Get();
+			multExpr();
 		} else SynErr(20);
 	}
 
@@ -200,7 +189,7 @@ public class Parser {
 	
 	static readonly bool[,] set = {
 		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_T,_T,_T, _x,_x}
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_T, _T,_T,_T,_T, _x,_x}
 
 	};
 } // end Parser
@@ -222,19 +211,19 @@ public class Errors {
 			case 5: s = "\"-\" expected"; break;
 			case 6: s = "\"*\" expected"; break;
 			case 7: s = "\"/\" expected"; break;
-			case 8: s = "\"(\" expected"; break;
-			case 9: s = "\")\" expected"; break;
-			case 10: s = "\"void\" expected"; break;
-			case 11: s = "\"int\" expected"; break;
-			case 12: s = "\"float\" expected"; break;
-			case 13: s = "\"double\" expected"; break;
+			case 8: s = "\"%\" expected"; break;
+			case 9: s = "\"(\" expected"; break;
+			case 10: s = "\")\" expected"; break;
+			case 11: s = "\"void\" expected"; break;
+			case 12: s = "\"int\" expected"; break;
+			case 13: s = "\"float\" expected"; break;
 			case 14: s = "\"string\" expected"; break;
 			case 15: s = "\"boolean\" expected"; break;
 			case 16: s = "??? expected"; break;
 			case 17: s = "invalid type"; break;
-			case 18: s = "invalid addExpr"; break;
-			case 19: s = "invalid multExpr"; break;
-			case 20: s = "invalid terminalExpr"; break;
+			case 18: s = "invalid addExprOp"; break;
+			case 19: s = "invalid terminalExpr"; break;
+			case 20: s = "invalid multExprOp"; break;
 			case 21: s = "invalid value"; break;
 
 			default: s = "error " + n; break;

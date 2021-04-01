@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Collections;
 
-namespace cocor_compiler {
+namespace alela {
 
 public class Token {
 	public int kind;    // token kind
@@ -229,12 +229,12 @@ public class Scanner {
 		for (int i = 65; i <= 90; ++i) start[i] = 1;
 		for (int i = 97; i <= 122; ++i) start[i] = 1;
 		for (int i = 48; i <= 57; ++i) start[i] = 2;
-		start[36] = 3; 
-		start[61] = 4; 
-		start[43] = 5; 
-		start[45] = 6; 
-		start[42] = 7; 
-		start[47] = 8; 
+		start[61] = 3; 
+		start[43] = 4; 
+		start[45] = 5; 
+		start[42] = 6; 
+		start[47] = 7; 
+		start[37] = 8; 
 		start[40] = 9; 
 		start[41] = 10; 
 		start[Buffer.EOF] = -1;
@@ -300,59 +300,12 @@ public class Scanner {
 
 
 
-	bool Comment0() {
-		int level = 1, pos0 = pos, line0 = line, col0 = col, charPos0 = charPos;
-		NextCh();
-		if (ch == '/') {
-			NextCh();
-			for(;;) {
-				if (ch == 10) {
-					level--;
-					if (level == 0) { oldEols = line - line0; NextCh(); return true; }
-					NextCh();
-				} else if (ch == Buffer.EOF) return false;
-				else NextCh();
-			}
-		} else {
-			buffer.Pos = pos0; NextCh(); line = line0; col = col0; charPos = charPos0;
-		}
-		return false;
-	}
-
-	bool Comment1() {
-		int level = 1, pos0 = pos, line0 = line, col0 = col, charPos0 = charPos;
-		NextCh();
-		if (ch == '*') {
-			NextCh();
-			for(;;) {
-				if (ch == '*') {
-					NextCh();
-					if (ch == '/') {
-						level--;
-						if (level == 0) { oldEols = line - line0; NextCh(); return true; }
-						NextCh();
-					}
-				} else if (ch == '/') {
-					NextCh();
-					if (ch == '*') {
-						level++; NextCh();
-					}
-				} else if (ch == Buffer.EOF) return false;
-				else NextCh();
-			}
-		} else {
-			buffer.Pos = pos0; NextCh(); line = line0; col = col0; charPos = charPos0;
-		}
-		return false;
-	}
-
 
 	void CheckLiteral() {
 		switch (t.val) {
-			case "void": t.kind = 10; break;
-			case "int": t.kind = 11; break;
-			case "float": t.kind = 12; break;
-			case "double": t.kind = 13; break;
+			case "void": t.kind = 11; break;
+			case "int": t.kind = 12; break;
+			case "float": t.kind = 13; break;
 			case "string": t.kind = 14; break;
 			case "boolean": t.kind = 15; break;
 			default: break;
@@ -363,7 +316,7 @@ public class Scanner {
 		while (ch == ' ' ||
 			ch == 10 || ch == 13
 		) NextCh();
-		if (ch == '/' && Comment0() ||ch == '/' && Comment1()) return NextToken();
+
 		int recKind = noSym;
 		int recEnd = pos;
 		t = new Token();
@@ -391,23 +344,21 @@ public class Scanner {
 				if (ch >= '0' && ch <= '9') {AddCh(); goto case 2;}
 				else {t.kind = 2; break;}
 			case 3:
-				recEnd = pos; recKind = 17;
-				if (ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z') {AddCh(); goto case 3;}
-				else {t.kind = 17; break;}
-			case 4:
 				{t.kind = 3; break;}
-			case 5:
+			case 4:
 				{t.kind = 4; break;}
-			case 6:
+			case 5:
 				{t.kind = 5; break;}
-			case 7:
+			case 6:
 				{t.kind = 6; break;}
-			case 8:
+			case 7:
 				{t.kind = 7; break;}
-			case 9:
+			case 8:
 				{t.kind = 8; break;}
-			case 10:
+			case 9:
 				{t.kind = 9; break;}
+			case 10:
+				{t.kind = 10; break;}
 
 		}
 		t.val = new String(tval, 0, tlen);

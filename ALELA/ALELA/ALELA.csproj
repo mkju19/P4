@@ -5,4 +5,13 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Update="Grammar\AlelaGrammar.atg">
+      <Generator></Generator>
+    </None>
+    <None Update="prog.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

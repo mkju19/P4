@@ -1,5 +1,5 @@
 ﻿using System;
-using cocor_compiler;
+using alela;
 
 namespace ALELA
 {

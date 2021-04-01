@@ -28,14 +28,14 @@ TOKENS
 PRAGMAS
 // Add pragma declarations here.
 // Example:
-   switch = '$' { digit | letter }. (. Optional semantic action .)
+//   switch = '$' { digit | letter }. (. Optional semantic action .)
 
 
 // Add comments here.
 // Example for a multi-line block comment:
-   COMMENTS FROM "/*" TO "*/" NESTED
+//   COMMENTS FROM "/*" TO "*/" NESTED
 // Example for a single line comment:
-   COMMENTS FROM "//" TO lf
+//   COMMENTS FROM "//" TO lf
 
 
 // Set the ignored characters (whitespaces) here, the blank character is
@@ -68,11 +68,15 @@ expr = addExpr
 .
 
 addExpr = multExpr [addExprOp]
+.
+
 addExprOp = '+' addExpr  | '-' addExpr
 .
 
 multExpr = terminalExpr [multExprOp]
-multExprOp = '*' multExpr  | '/' multExpr
+.
+
+multExprOp = '*' multExpr  | '/' multExpr | '%' multExpr
 .
 
 terminalExpr = value | '(' expr ')'
@@ -84,7 +88,6 @@ value = NUM | ID
 type = "void"
      | "int"
      | "float"
-     | "double"
      | "string"
      | "boolean"
 .
