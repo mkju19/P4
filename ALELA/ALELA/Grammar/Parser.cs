@@ -1,5 +1,6 @@
 
 using System;
+using Alela.AST
 
 namespace alela {
 
@@ -9,7 +10,7 @@ public class Parser {
 	public const int _EOF = 0;
 	public const int _ID = 1;
 	public const int _NUM = 2;
-	public const int maxT = 16;
+	public const int maxT = 17;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -21,6 +22,9 @@ public class Parser {
 	public Token t;    // last recognized token
 	public Token la;   // lookahead token
 	int errDist = minErrDist;
+
+public ProgAST AST
+
 
 
 
@@ -83,24 +87,49 @@ public class Parser {
 	
 	void Alela() {
 		dcls();
+		lines();
 	}
 
 	void dcls() {
 		dcl();
+		Expect(3);
 		if (StartOf(1)) {
 			dcls();
 		}
 	}
 
+	void lines() {
+		while (StartOf(2)) {
+			line();
+			Expect(3);
+		}
+	}
+
+	void line() {
+		if (StartOf(1)) {
+			dcl();
+		} else if (la.kind == 1) {
+			Get();
+			assig();
+		} else SynErr(18);
+	}
+
 	void dcl() {
 		type();
-		assig();
+		Expect(1);
+		if (la.kind == 4) {
+			assig();
+		}
+	}
+
+	void assig() {
+		Expr e; 
+		Expect(4);
+		expr(out e);
 	}
 
 	void type() {
-		if (la.kind == 11) {
-			Get();
-		} else if (la.kind == 12) {
+		if (la.kind == 12) {
 			Get();
 		} else if (la.kind == 13) {
 			Get();
@@ -108,72 +137,74 @@ public class Parser {
 			Get();
 		} else if (la.kind == 15) {
 			Get();
-		} else SynErr(17);
-	}
-
-	void assig() {
-		Expect(1);
-		Expect(3);
-		expr();
-	}
-
-	void expr() {
-		addExpr();
-	}
-
-	void addExpr() {
-		multExpr();
-		if (la.kind == 4 || la.kind == 5) {
-			addExprOp();
-		}
-	}
-
-	void multExpr() {
-		terminalExpr();
-		if (la.kind == 6 || la.kind == 7 || la.kind == 8) {
-			multExprOp();
-		}
-	}
-
-	void addExprOp() {
-		if (la.kind == 4) {
+		} else if (la.kind == 16) {
 			Get();
-			addExpr();
-		} else if (la.kind == 5) {
-			Get();
-			addExpr();
-		} else SynErr(18);
-	}
-
-	void terminalExpr() {
-		if (la.kind == 1 || la.kind == 2) {
-			value();
-		} else if (la.kind == 9) {
-			Get();
-			expr();
-			Expect(10);
 		} else SynErr(19);
 	}
 
-	void multExprOp() {
-		if (la.kind == 6) {
+	void expr(out Expr e) {
+		addExpr(out e);
+	}
+
+	void addExpr(out Expr e) {
+		Operator op; Expr e2; 
+		multExpr(out e);
+		if (la.kind == 5 || la.kind == 6) {
+			addExprOp(out op, out e2);
+			e = new BinExpr(e, op, e2); 
+		}
+	}
+
+	void multExpr(out Expr e) {
+		Operator op; Expr e2; 
+		terminalExpr(out e);
+		if (la.kind == 7 || la.kind == 8 || la.kind == 9) {
+			multExprOp(out op, out e2);
+			e = new BinExpr(e, op, e2); 
+		}
+	}
+
+	void addExprOp(out Operator op, out Expr e2) {
+		if (la.kind == 5) {
 			Get();
-			multExpr();
-		} else if (la.kind == 7) {
+			addExpr(out e2);
+			op = Operator.PLUS; 
+		} else if (la.kind == 6) {
 			Get();
-			multExpr();
-		} else if (la.kind == 8) {
-			Get();
-			multExpr();
+			addExpr(out e2);
+			op = Operator.MINUS; 
 		} else SynErr(20);
 	}
 
-	void value() {
+	void terminalExpr(out Expr e) {
 		if (la.kind == 2) {
+			value(out e);
+		} else if (la.kind == 10) {
 			Get();
-		} else if (la.kind == 1) {
-			Get();
+			expr(out e);
+			Expect(11);
 		} else SynErr(21);
+	}
+
+	void multExprOp(out Operator op, out Expr e2) {
+		if (la.kind == 7) {
+			Get();
+			multExpr(out e2);
+			op = Operator.MULT; 
+		} else if (la.kind == 8) {
+			Get();
+			multExpr(out e2);
+			op = Operator.DIV; 
+		} else if (la.kind == 9) {
+			Get();
+			multExpr(out e2);
+			op = Operator.MOD; 
+		} else SynErr(22);
+	}
+
+	void value(out Expr e) {
+		Expect(2);
+		e = new Expr(t.value); 
 	}
 
 
@@ -188,8 +219,9 @@ public class Parser {
 	}
 	
 	static readonly bool[,] set = {
-		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_T, _T,_T,_T,_T, _x,_x}
+		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_x,_x},
+		{_x,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_x,_x}
 
 	};
 } // end Parser
@@ -206,25 +238,26 @@ public class Errors {
 			case 0: s = "EOF expected"; break;
 			case 1: s = "ID expected"; break;
 			case 2: s = "NUM expected"; break;
-			case 3: s = "\"=\" expected"; break;
-			case 4: s = "\"+\" expected"; break;
-			case 5: s = "\"-\" expected"; break;
-			case 6: s = "\"*\" expected"; break;
-			case 7: s = "\"/\" expected"; break;
-			case 8: s = "\"%\" expected"; break;
-			case 9: s = "\"(\" expected"; break;
-			case 10: s = "\")\" expected"; break;
-			case 11: s = "\"void\" expected"; break;
-			case 12: s = "\"int\" expected"; break;
-			case 13: s = "\"float\" expected"; break;
-			case 14: s = "\"string\" expected"; break;
-			case 15: s = "\"boolean\" expected"; break;
-			case 16: s = "??? expected"; break;
-			case 17: s = "invalid type"; break;
-			case 18: s = "invalid addExprOp"; break;
-			case 19: s = "invalid terminalExpr"; break;
-			case 20: s = "invalid multExprOp"; break;
-			case 21: s = "invalid value"; break;
+			case 3: s = "\";\" expected"; break;
+			case 4: s = "\"=\" expected"; break;
+			case 5: s = "\"+\" expected"; break;
+			case 6: s = "\"-\" expected"; break;
+			case 7: s = "\"*\" expected"; break;
+			case 8: s = "\"/\" expected"; break;
+			case 9: s = "\"%\" expected"; break;
+			case 10: s = "\"(\" expected"; break;
+			case 11: s = "\")\" expected"; break;
+			case 12: s = "\"void\" expected"; break;
+			case 13: s = "\"int\" expected"; break;
+			case 14: s = "\"float\" expected"; break;
+			case 15: s = "\"string\" expected"; break;
+			case 16: s = "\"boolean\" expected"; break;
+			case 17: s = "??? expected"; break;
+			case 18: s = "invalid line"; break;
+			case 19: s = "invalid type"; break;
+			case 20: s = "invalid addExprOp"; break;
+			case 21: s = "invalid terminalExpr"; break;
+			case 22: s = "invalid multExprOp"; break;
 
 			default: s = "error " + n; break;
 		}

@@ -7,6 +7,8 @@ COMPILER Alela
 // If you want your generated compiler case insensitive add the
 // keyword IGNORECASE here.
 
+    public ProgAST AST
+
 
 CHARACTERS
 // Add character set declarations here.
@@ -52,37 +54,56 @@ PRODUCTIONS
 //   Empty = "BEGIN" { Statement } "END".
 //   Statement = ident "=" number { "+" number } .
 
-Alela = dcls
+Alela = dcls lines
 .
 
-dcls = dcl [dcls]
+lines = {line ';'}
 .
 
-dcl = type assig
+line = dcl
+     | ID assig
 .
 
-assig = ID '=' expr
+dcls = dcl ';' [dcls]
 .
 
-expr = addExpr 
+dcl = type ID [assig]
 .
 
-addExpr = multExpr [addExprOp]
+assig =     (. Expr e; .)
+    '=' expr<out e>
 .
 
-addExprOp = '+' addExpr  | '-' addExpr
+expr <out Expr e> = addExpr <out e>
 .
 
-multExpr = terminalExpr [multExprOp]
+addExpr <out Expr e> (. Operator op; Expr e2; .)
+    = multExpr <out e> [addExprOp <out op, out e2>  (. e = new BinExpr(e, op, e2); .)] 
 .
 
-multExprOp = '*' multExpr  | '/' multExpr | '%' multExpr
+addExprOp <out Operator op, out Expr e2> 
+    = '+' addExpr <out e2>  (. op = Operator.PLUS; .)
+    | '-' addExpr <out e2> (. op = Operator.MINUS; .)
 .
 
-terminalExpr = value | '(' expr ')'
+multExpr <out Expr e>   (. Operator op; Expr e2; .)
+    = terminalExpr <out e> [multExprOp <out op, out e2>  (. e = new BinExpr(e, op, e2); .)]
 .
 
-value = NUM | ID
+multExprOp <out Operator op, out Expr e2>
+    = '*' multExpr <out e2>  (. op = Operator.MULT; .)
+    | '/' multExpr <out e2>  (. op = Operator.DIV; .)
+    | '%' multExpr <out e2>  (. op = Operator.MOD; .)
+.
+
+terminalExpr <out Expr e>
+    = value <out e>
+    | '(' expr <out e> ')'  
+.
+
+value < out Expr e> = 
+    NUM (. e = new IntValue(t.value); .)
+    //| ID
 .
 
 type = "void"
