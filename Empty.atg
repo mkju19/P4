@@ -6,14 +6,13 @@ COMPILER ALELA
 // If you want your generated compiler case insensitive add the
 // keyword IGNORECASE here.
 
-	//public Prog ProgramAST;
+	public Prog ProgramAST;
 
 CHARACTERS
 // Add character set declarations here.
 // Examples:
    digit = "0123456789".
    letter = 'a'..'z' + 'A'..'Z'.
-   identifier = 'a'..'e' + 'g'..'h' + 'j'..'o' + 'q'..'z'.
    cr = '\r'.
    lt = '\t'.
    lf = '\n'.
@@ -26,6 +25,7 @@ TOKENS
    
    number = digit {digit} ['.' digit {digit}].
    id = letter {letter | digit}.
+   stringtext = '"' {letter | digit} '"'.
    newline = lf.
 	
 
@@ -38,9 +38,9 @@ PRAGMAS
 
 // Add comments here.
 // Example for a multi-line block comment:
-//   COMMENTS FROM "/*" TO "*/" NESTED
+   COMMENTS FROM "/*" TO "*/" NESTED
 // Example for a single line comment:
-//   COMMENTS FROM "//" TO lf
+   COMMENTS FROM "//" TO lf
 
 
 // Set the ignored characters (whitespaces) here, the blank character is
@@ -57,17 +57,20 @@ PRODUCTIONS
 //   AC = "BEGIN" { Statement } "END".
 //   Statement = ident "=" number { "+" number } .
 
-	ALELA
-	= DECL {DECL} SETUP LOOP [FUNCDECLS].
+	ALELA (. List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>(); AST e;.)
+	= DECL <out e> (. liste.Add(e); .)
+	{ DECL <out e> (. liste.Add(e); .) }
+	"setup" BLOCK <out elist> (. liste.Add(new ProgSetup(elist)); liste.Clear(); .)
+	"loop" BLOCK <out elist> (. liste.Add(new ProgLoop(elist)); .)
+	{FUNCDECL <out e> (. liste.Add(e); .)}.
     
-	DECL
-	= TYPE id ASSIG.
+	DECL <out AST e> (. SymDeclaring e1; AST e2 = null; .)
+	= TYPE <out e1> id (. string idval = t.val; e1.id = idval; .) [ASSIG <out e2, idval>]
+	(. e = new Decl(e1, e2); .)';'.
 
-	SETUP
-	= "setup" BLOCK.
-
-	ASSIG
-	= '=' EXPR ';'.
+	ASSIG <out AST e, string idval> (. e = null; .)
+	= '=' ( EXPR <out e> | stringtext (. e = new StringConst(t.val); .) )
+	(. e = new Assigning(idval, e); .).
 
 	/*STRUCTDEF
 	= "struct" STRUCTID '{' STRUCTFIELDS '}'.
@@ -91,109 +94,93 @@ PRODUCTIONS
 	STRUCTID 
 	= id.*/
 
-	LOOP 
-	= "loop" BLOCK.
+	BLOCK <. out List<AST> eo .> (. AST e; List<AST> e2 = new List<AST>(); .)
+	= '{' {STMT <out e> (. e2.Add(e); .) } '}' (. eo = e2; .).
 
-	BLOCK 
-	= '{' STMTS '}'.
+	STMT <out AST e>
+	(. AST logi, n1, n2; List<AST> stm = new List<AST>();
+	List<AST> stm2 = new List<AST>(); string id; e = null; .)
+	= "if" IFELSTMT <out e>
+	| "while" '(' LOGI_EXPR <out logi> ')' BLOCK <out stm> (. e = new WhileStmt(logi, stm); .)
+    | "for" '(' VALUE <out n1> "to" VALUE <out n2> ')'
+		BLOCK <out stm> (. e = new ForStmt(n1, n2, stm); .)
+    | "switch" '(' id (. id = t.val; .) ')'
+		'{' "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .)
+		{ "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .) }
+		"default" ':' BLOCK <out stm2> (. stm.Add(new SwitchDefault(stm2)); .) '}'
+		(. e = new SwitchStmt(id, stm); .)
+    | id (. id = t.val; .) CALL <id, out e> ';'
+    | DECL <out e> .
 
-	STMTS 
-	= STMT [STMTS].
+	IFELSTMT <out AST e> (. List<AST> stm, stm2 = new List<AST>(); AST els = null; .)
+	= '(' LOGI_EXPR <out AST logi> ')' BLOCK <out stm>
+	[ "else" ( BLOCK <out stm2> (. els = new ElseStmt(stm2); .) | "if" IFELSTMT <out els> )]
+	(. e = new IfStmt(logi, stm, els); .).
 
-	STMT 
-	= "if(" LOGI_EXPR ')' BLOCK ELSESTMT
-	| "while(" LOGI_EXPR ')' BLOCK
-    | "for(" VALUE "to" VALUE ')' BLOCK
-    | "switch(" id ')' '{' CASELIST '}'
-    | "Delay(" VALUE ')'
-    | "Timer(" VALUE ')'
-    | id CALL
-    | DECL.
+	CALL <string id, out AST e> (. e = null; List<AST> stm = new List<AST>(); .)
+	= FUNC <out stm> (. e = new FunctionStmt(id, stm); .)
+	| ASSIG <out e, id>.
 
-	CALL
-	= FUNC
-	| ASSIG.
+	VALUE <out AST e> (. e = null; .)
+	= number (. e = new IntConst(t.val); .) // int or float?
+	| id (. e = new SymReferencing(t.val); .).
 
-	VALUE
-	= number
-	| id.
+	FUNC <.out List<AST> eo.> (. AST v; List<AST> e = new List<AST>(); .)
+	= '(' [VALUE <out v> (. e.Add(v); .) {',' VALUE <out v> (. e.Add(v); .)}] ')'
+	(. eo= e; .).
 
-	FUNC 
-	= '(' [INPARAM_LIST] ')' ';'.
+	FUNCDECL <out AST e> (. SymDeclaring e1 ,e11; List<SymDeclaring> e2 = new List<SymDeclaring>();  List<AST> e3 = new List<AST>(); .)
+	= TYPE <out e1> id (. string idval = t.val; e1.id = idval; .)
+	'(' [TYPE <out e11> id (. e11.id = t.val; .) {',' TYPE <out e11> id (. e11.id = t.val; .)}] ')' BLOCK <out e3>
+	(. e = new FuncDecl(e1, e2, e3); .). // may need extra id
 
-	INPARAM_LIST 
-	= VALUE [',' INPARAM_LIST].
-
-	FUNCDECLS 
-	= FUNCDECL [FUNCDECLS].
-
-	FUNCDECL 
-	= TYPE id '(' [FUNCARG_LIST] ')' BLOCK.
-
-	FUNCARG_LIST 
-	= FUNCARG [ ',' FUNCARG_LIST].
-    
-	FUNCARG 
-	= TYPE id.
-    
-	ELSESTMT 
-	= "else" ELSEIF.
-    
-	ELSEIF
-	= "if" '(' LOGI_EXPR ')' BLOCK 
-	| BLOCK.
-    
-	CASELIST 
-	= "case" id ':' BLOCK [ CASELIST]
-	| "default" ':' BLOCK.
-
-	LOGI_EXPR
-	= LOGI_AND [LOGI_OR].
+	LOGI_EXPR <out AST e> 
+	= LOGI_AND <out e> [LOGI_OR <e, out e>].
 	
-	LOGI_OR
-	= "||" LOGI_EXPR.
+	LOGI_OR <AST e, out AST eo> (. string op; AST e2; .)
+	= "||" (. op = t.val; .) LOGI_EXPR <out e2> (. eo = new Expression(op, e, e2); .).
 	
-	LOGI_AND
-	= LOGI_EQUAL [LOGI_ANDOp].
+	LOGI_AND <out AST e>
+	= LOGI_EQUAL <out e> [LOGI_ANDOp <e, out e>].
 
-	LOGI_ANDOp
-	= "&" LOGI_EQUAL.
+	LOGI_ANDOp <AST e, out AST eo> (. string op; AST e2; .)
+	= "&" (. op = t.val; .) LOGI_EQUAL <out e2> (. eo = new Expression(op, e, e2); .).
 	
-	LOGI_EQUAL
-	= LOGI_LG [LOGI_EQUALOp].
+	LOGI_EQUAL <out AST e>
+	= LOGI_LG <out e> [LOGI_EQUALOp <e, out e>].
 
-	LOGI_EQUALOp
-	= ( "==" | "!=" ) LOGI_LG.
+	LOGI_EQUALOp <AST e, out AST eo> (. string op; AST e2; .)
+	= ( "==" | "!=" ) (. op = t.val; .) LOGI_LG <out e2> (. eo = new Expression(op, e, e2); .).
 	
-	LOGI_LG
-	= LOGI_NOT [LOGI_LGOp].
+	LOGI_LG <out AST e>
+	= LOGI_NOT <out e> [LOGI_LGOp <e, out e>].
 	
-	LOGI_LGOp
-	= ( ">=" | '>' | "<=" | '<' ) LOGI_NOT.
+	LOGI_LGOp <AST e, out AST eo> (. string op; AST e2; .)
+	= ( ">=" | '>' | "<=" | '<' ) (. op = t.val; .) LOGI_NOT <out e2> (. eo = new Expression(op, e, e2); .).
 	
-	LOGI_NOT
-	= '!' LOGI_NOT 
-	| LOGI_TERM.
+	LOGI_NOT <out AST e> (. string op; AST e2; e = null; .)
+	= '!' (. op = t.val; .) LOGI_NOT <out e2> (. e = new NotExpression(op, e2); .)
+	| LOGI_TERM <out e>.
 	
-	LOGI_TERM
-	= '(' LOGI_EXPR ')'
-	| VALUE.
+	LOGI_TERM <out AST e> (. e = null; .)
+	= VALUE <out e>
+	| '(' LOGI_EXPR <out e> ')'.
 
-	EXPR
-	= multExpr [addExpr].
+	EXPR <out AST e>
+	= multExpr <out e> [addExpr <e, out e>].
+	
+	addExpr <AST e, out AST eo> (. string op; AST e2; .) 
+	= ( '+' | '-' ) (. op = t.val; .) EXPR <out e2> (. eo = new Expression(op, e, e2); .).
 
-	addExpr
-	= ( '+' | '-' ) EXPR.
+	multExpr <out AST e> 
+	= terminalExpr <out e> [multExprOp <e, out e>].
 
-	multExpr 
-	= terminalExpr [multExprOp].
+	multExprOp <AST e, out AST eo> (. string op; AST e2; .) 
+	= ( '*' | '/' | '%' ) (. op = t.val; .) multExpr <out e2> (. eo = new Expression(op, e, e2); .).
 
-	multExprOp
-	= ( '*' | '/' | '%' ) multExpr.
-
-	terminalExpr 
-	= VALUE 
-	| '(' EXPR ')'.
+	terminalExpr <out AST e> (. e = null; .)
+	= VALUE <out e>
+	| '(' EXPR <out e> ')'.
 
 	/*LIST 
 	= "List<" TYPE '>' id '=' '{' LISTASSIGNS '}'.
@@ -204,13 +191,12 @@ PRODUCTIONS
 	LISTASSIGN 
 	= VALUE.*/
 
-	TYPE 
-	= "void"
-	| "int"
-    | "float"
-    | "double"
-    | "string"
-    | "boolean".
+	TYPE <out SymDeclaring e> (. e = null; .)
+	= "void" (. e = new VoidDcl(); .)
+	| "int" (. e = new IntDcl(); .)
+    | "float" (. e = new FloatDcl(); .)
+    | "string" (. e = new StringDcl(); .)
+    | "boolean" (. e = new BooleanDcl(); .).
 
 // End of your compiler specification, make sure the name here matches
 // the grammar name at the start of this grammar.

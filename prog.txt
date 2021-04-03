@@ -1,8 +1,19 @@
 int a = 4;
 float f = 2.5;
+int ON = 1;
+int TRUE = 1;
+int OFF = 0;
+int FALSE = 0;
+
+/*-------------------------------------------------------------*/
+
+//string pin = "this a pin aka pin 2";
 
 setup {
 	int a = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
+	for (a to 100){
+		f = f + 3;
+	}
 }
 
 loop {
@@ -13,4 +24,12 @@ loop {
 int test() {
 	float t = 13.37;
 
+}
+
+/*-------------------------------------------------------------*/
+
+int main() {
+	while(ON){
+		test();
+	}
 }

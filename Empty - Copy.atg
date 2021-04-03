@@ -1,0 +1,216 @@
+// Set the name of your grammar here (and at the end of this grammar):
+COMPILER ALELA
+
+// Add auxiliary methods and declaration here.
+
+// If you want your generated compiler case insensitive add the
+// keyword IGNORECASE here.
+
+	//public Prog ProgramAST;
+
+CHARACTERS
+// Add character set declarations here.
+// Examples:
+   digit = "0123456789".
+   letter = 'a'..'z' + 'A'..'Z'.
+   identifier = 'a'..'e' + 'g'..'h' + 'j'..'o' + 'q'..'z'.
+   cr = '\r'.
+   lt = '\t'.
+   lf = '\n'.
+
+
+TOKENS
+// Add token declarations here.
+// Example:
+//   id = letter {letter | digit}.
+   
+   number = digit {digit} ['.' digit {digit}].
+   id = letter {letter | digit}.
+   newline = lf.
+	
+
+
+PRAGMAS
+// Add pragma declarations here.
+// Example:
+//   switch = '$' { digit | letter }. (. Optional semantic action .)
+
+
+// Add comments here.
+// Example for a multi-line block comment:
+//   COMMENTS FROM "/*" TO "*/" NESTED
+// Example for a single line comment:
+//   COMMENTS FROM "//" TO lf
+
+
+// Set the ignored characters (whitespaces) here, the blank character is
+// ignored by default.
+// Example, add line breaks to the ignore set.
+   IGNORE cr + lf + lt
+
+
+PRODUCTIONS
+
+// Add your productions here, one must have the same name as the grammar,
+// it will be the start symbol (entry point of your compiler).
+// Example:
+//   AC = "BEGIN" { Statement } "END".
+//   Statement = ident "=" number { "+" number } .
+
+	ALELA
+	= DECL {DECL} SETUP LOOP [FUNCDECLS].
+    
+	DECL
+	= TYPE id ASSIG.
+
+	SETUP
+	= "setup" BLOCK.
+
+	ASSIG
+	= '=' EXPR ';'.
+
+	/*STRUCTDEF
+	= "struct" STRUCTID '{' STRUCTFIELDS '}'.
+
+	STRUCTFIELDS
+	= STRUCTFIELD [ STRUCTFIELDS].
+	
+	STRUCTFIELD 
+	= TYPE id ';'
+	| FUNC.
+    
+	STRUCTDECL 
+	= STRUCTID id '=' '{' FIELDINITS '}'.
+
+	FIELDINITS 
+	= FIELDINIT [',' FIELDINITS].
+    
+	FIELDINIT 
+	= id '=' expr.
+
+	STRUCTID 
+	= id.*/
+
+	LOOP 
+	= "loop" BLOCK.
+
+	BLOCK 
+	= '{' STMTS '}'.
+
+	STMTS 
+	= STMT [STMTS].
+
+	STMT 
+	= "if(" LOGI_EXPR ')' BLOCK ELSESTMT
+	| "while(" LOGI_EXPR ')' BLOCK
+    | "for(" VALUE "to" VALUE ')' BLOCK
+    | "switch(" id ')' '{' CASELIST '}'
+    | "Delay(" VALUE ')' // c++ lib?
+    | "Timer(" VALUE ')' // c++ lib?
+    | id CALL
+    | DECL.
+
+	CALL
+	= FUNC
+	| ASSIG.
+
+	VALUE
+	= number
+	| id.
+
+	FUNC 
+	= '(' [INPARAM_LIST] ')' ';'.
+
+	INPARAM_LIST 
+	= VALUE [',' INPARAM_LIST].
+
+	FUNCDECLS 
+	= FUNCDECL [FUNCDECLS].
+
+	FUNCDECL 
+	= TYPE id '(' [FUNCARG_LIST] ')' BLOCK.
+
+	FUNCARG_LIST 
+	= FUNCARG [ ',' FUNCARG_LIST].
+    
+	FUNCARG 
+	= TYPE id.
+    
+	ELSESTMT 
+	= "else" ELSEIF.
+    
+	ELSEIF
+	= "if" '(' LOGI_EXPR ')' BLOCK 
+	| BLOCK.
+    
+	CASELIST 
+	= "case" id ':' BLOCK [ CASELIST]
+	| "default" ':' BLOCK.
+
+	LOGI_EXPR
+	= LOGI_AND [LOGI_OR].
+	
+	LOGI_OR
+	= "||" LOGI_EXPR.
+	
+	LOGI_AND
+	= LOGI_EQUAL [LOGI_ANDOp].
+
+	LOGI_ANDOp
+	= "&" LOGI_EQUAL.
+	
+	LOGI_EQUAL
+	= LOGI_LG [LOGI_EQUALOp].
+
+	LOGI_EQUALOp
+	= ( "==" | "!=" ) LOGI_LG.
+	
+	LOGI_LG
+	= LOGI_NOT [LOGI_LGOp].
+	
+	LOGI_LGOp
+	= ( ">=" | '>' | "<=" | '<' ) LOGI_NOT.
+	
+	LOGI_NOT
+	= '!' LOGI_NOT 
+	| LOGI_TERM.
+	
+	LOGI_TERM
+	= '(' LOGI_EXPR ')'
+	| VALUE.
+
+	EXPR
+	= multExpr [addExpr].
+
+	addExpr
+	= ( '+' | '-' ) EXPR.
+
+	multExpr 
+	= terminalExpr [multExprOp].
+
+	multExprOp
+	= ( '*' | '/' | '%' ) multExpr.
+
+	terminalExpr 
+	= VALUE 
+	| '(' EXPR ')'.
+
+	/*LIST 
+	= "List<" TYPE '>' id '=' '{' LISTASSIGNS '}'.
+
+	LISTASSIGNS 
+	= LISTASSIGN [',' LISTASSIGNS].
+
+	LISTASSIGN 
+	= VALUE.*/
+
+	TYPE 
+	= "void"
+	| "int"
+    | "float"
+    | "string"
+    | "boolean".
+
+// End of your compiler specification, make sure the name here matches
+// the grammar name at the start of this grammar.
+END ALELA.
