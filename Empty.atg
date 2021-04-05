@@ -23,7 +23,8 @@ TOKENS
 // Example:
 //   id = letter {letter | digit}.
    
-   number = digit {digit} ['.' digit {digit}].
+   intnumber = digit {digit}.
+   floatnumber = digit {digit} '.' digit {digit}.
    id = letter {letter | digit}.
    stringtext = '"' {letter | digit} '"'.
    newline = lf.
@@ -60,9 +61,10 @@ PRODUCTIONS
 	ALELA (. List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>(); AST e;.)
 	= DECL <out e> (. liste.Add(e); .)
 	{ DECL <out e> (. liste.Add(e); .) }
-	"setup" BLOCK <out elist> (. liste.Add(new ProgSetup(elist)); liste.Clear(); .)
+	"setup" BLOCK <out elist> (. liste.Add(new ProgSetup(elist)); .)
 	"loop" BLOCK <out elist> (. liste.Add(new ProgLoop(elist)); .)
-	{FUNCDECL <out e> (. liste.Add(e); .)}.
+	{FUNCDECL <out e> (. liste.Add(e); .)}
+	(. ProgramAST = new Prog(liste); .).
     
 	DECL <out AST e> (. SymDeclaring e1; AST e2 = null; .)
 	= TYPE <out e1> id (. string idval = t.val; e1.id = idval; .) [ASSIG <out e2, idval>]
@@ -122,7 +124,8 @@ PRODUCTIONS
 	| ASSIG <out e, id>.
 
 	VALUE <out AST e> (. e = null; .)
-	= number (. e = new IntConst(t.val); .) // int or float?
+	= intnumber (. e = new IntConst(t.val); .)
+	| floatnumber (. e = new FloatConst(t.val); .)
 	| id (. e = new SymReferencing(t.val); .).
 
 	FUNC <.out List<AST> eo.> (. AST v; List<AST> e = new List<AST>(); .)
@@ -158,8 +161,8 @@ PRODUCTIONS
 	LOGI_LGOp <AST e, out AST eo> (. string op; AST e2; .)
 	= ( ">=" | '>' | "<=" | '<' ) (. op = t.val; .) LOGI_NOT <out e2> (. eo = new Expression(op, e, e2); .).
 	
-	LOGI_NOT <out AST e> (. string op; AST e2; e = null; .)
-	= '!' (. op = t.val; .) LOGI_NOT <out e2> (. e = new NotExpression(op, e2); .)
+	LOGI_NOT <out AST e> (. AST e2; e = null; .)
+	= '!' LOGI_NOT <out e2> (. e = new NotExpression(e2); .)
 	| LOGI_TERM <out e>.
 	
 	LOGI_TERM <out AST e> (. e = null; .)

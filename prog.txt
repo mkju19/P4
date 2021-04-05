@@ -7,10 +7,10 @@ int FALSE = 0;
 
 /*-------------------------------------------------------------*/
 
-//string pin = "this a pin aka pin 2";
+string pin = "this";
 
 setup {
-	int a = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
+	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
 	for (a to 100){
 		f = f + 3;
 	}

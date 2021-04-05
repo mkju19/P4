@@ -177,8 +177,8 @@ namespace ALELA_Compiler {
 
     public class Assigning : SymStatments {
         public string id;
-        public AST child1;
-        public Assigning(string i, AST ch1) { id = i; child1 = ch1; }
+        public AST child;
+        public Assigning(string i, AST ch1) { id = i; child = ch1; }
         public override void accept(Visitor v) { v.visit(this); }
     }
 
@@ -206,6 +206,12 @@ namespace ALELA_Compiler {
         public override void accept(Visitor v) { v.visit(this); }
     }
 
+    public class BooleanConst : AST {
+        public string val;
+        public BooleanConst(string v) { val = v; }
+        public override void accept(Visitor v) { v.visit(this); }
+    }
+
     public class Expression : AST {
         public string operation;
         public AST childe1, childe2;
@@ -218,12 +224,22 @@ namespace ALELA_Compiler {
     }
 
     public class NotExpression : AST {
-        public string operation;
-        public AST childe1;
-        public NotExpression(string op, AST ch1) {
-            operation = op;
-            childe1 = ch1;
+        public AST childe;
+        public NotExpression(AST ch1) {
+            childe = ch1;
         }
+        public override void accept(Visitor v) { v.visit(this); }
+    }
+
+    public class ConvertingToFloat : AST {
+        public AST child;
+        public ConvertingToFloat(AST n) { child = n; }
+        public override void accept(Visitor v) { v.visit(this); }
+    }
+
+    public class ConvertingToBool : AST {
+        public AST child;
+        public ConvertingToBool(AST n) { child = n; }
         public override void accept(Visitor v) { v.visit(this); }
     }
 }

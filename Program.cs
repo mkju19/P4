@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ALELA_Compiler {
     class Program {
@@ -7,9 +8,9 @@ namespace ALELA_Compiler {
             Scanner scanner = new Scanner(file);
             Parser parser = new Parser(scanner);
             parser.Parse();
-            Console.WriteLine($" {parser.errors.count} errors detected");
-            /*parser.ProgramAST.accept(new PrettyprintVisitor());
-            Console.WriteLine("  Pretty Printing successful");
+            Console.WriteLine($" {parser.errors.count} errors detected\n");
+            parser.ProgramAST.accept(new PrettyprintVisitor());
+            Console.WriteLine("  Pretty Printing successful\n");
             parser.ProgramAST.accept(new SymbolTableFilling());
 
             string dictionaryString = "{";
@@ -18,12 +19,12 @@ namespace ALELA_Compiler {
             }
             Console.WriteLine(dictionaryString.TrimEnd(',', ' ') + "}");
 
-            Console.WriteLine("  Symbol Table filling successful");
+            Console.WriteLine("  Symbol Table filling successful\n");
             parser.ProgramAST.accept(new TypeChecker());
-            Console.WriteLine("  Type Checking successful");
+            Console.WriteLine("  Type Checking successful\n");
             parser.ProgramAST.accept(new PrettyprintVisitor());
             Console.WriteLine("  Pretty Printing successful\n");
-            parser.ProgramAST.accept(new CCodeGenerator());
+            /*parser.ProgramAST.accept(new CCodeGenerator());
             Console.WriteLine("\n  C Code Generation successful");*/
         }
     }
