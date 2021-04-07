@@ -7,10 +7,13 @@ int FALSE = 0;
 
 /*-------------------------------------------------------------*/
 
-string pin = "this";
+string pin = "th8is a 2 test !";
 
 setup {
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
+	boolean y = 1;
+	y = 1.5;
+	void w;
 	for (a to 100){
 		f = f + 3;
 	}

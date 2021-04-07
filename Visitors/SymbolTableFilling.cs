@@ -52,8 +52,8 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(Decl n) {
-            n.assigning.accept(this);
             n.declaring.accept(this);
+            n.assigning?.accept(this);
         }
 
         public override void visit(FuncDecl n) {

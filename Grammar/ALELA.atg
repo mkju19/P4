@@ -1,62 +1,38 @@
-// Set the name of your grammar here (and at the end of this grammar):
 COMPILER ALELA
-
-// Add auxiliary methods and declaration here.
-
-// If you want your generated compiler case insensitive add the
-// keyword IGNORECASE here.
 
 	public Prog ProgramAST;
 
 CHARACTERS
-// Add character set declarations here.
-// Examples:
+
    digit = "0123456789".
    letter = 'a'..'z' + 'A'..'Z'.
+   AllUTF8 = ANY - '"'.
    cr = '\r'.
    lt = '\t'.
    lf = '\n'.
 
 
 TOKENS
-// Add token declarations here.
-// Example:
-//   id = letter {letter | digit}.
    
    intnumber = digit {digit}.
    floatnumber = digit {digit} '.' digit {digit}.
    id = letter {letter | digit}.
-   stringtext = '"' {letter | digit} '"'.
+   stringtext = '"' {AllUTF8} '"'.
    newline = lf.
 	
 
 
 PRAGMAS
-// Add pragma declarations here.
-// Example:
-//   switch = '$' { digit | letter }. (. Optional semantic action .)
-
-
 // Add comments here.
 // Example for a multi-line block comment:
    COMMENTS FROM "/*" TO "*/" NESTED
 // Example for a single line comment:
    COMMENTS FROM "//" TO lf
 
-
-// Set the ignored characters (whitespaces) here, the blank character is
-// ignored by default.
-// Example, add line breaks to the ignore set.
    IGNORE cr + lf + lt
 
 
 PRODUCTIONS
-
-// Add your productions here, one must have the same name as the grammar,
-// it will be the start symbol (entry point of your compiler).
-// Example:
-//   AC = "BEGIN" { Statement } "END".
-//   Statement = ident "=" number { "+" number } .
 
 	ALELA (. List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>(); AST e;.)
 	= DECL <out e> (. liste.Add(e); .)
@@ -75,20 +51,14 @@ PRODUCTIONS
 	(. e = new Assigning(idval, e); .).
 
 	/*STRUCTDEF
-	= "struct" STRUCTID '{' STRUCTFIELDS '}'.
-
-	STRUCTFIELDS
-	= STRUCTFIELD [ STRUCTFIELDS].
+	= "struct" STRUCTID '{' STRUCTFIELD {STRUCTFIELD} '}'.
 	
 	STRUCTFIELD 
 	= TYPE id ';'
 	| FUNC.
     
 	STRUCTDECL 
-	= STRUCTID id '=' '{' FIELDINITS '}'.
-
-	FIELDINITS 
-	= FIELDINIT [',' FIELDINITS].
+	= STRUCTID id '=' '{' FIELDINIT {',' FIELDINIT} '}'.
     
 	FIELDINIT 
 	= id '=' expr.
@@ -186,13 +156,7 @@ PRODUCTIONS
 	| '(' EXPR <out e> ')'.
 
 	/*LIST 
-	= "List<" TYPE '>' id '=' '{' LISTASSIGNS '}'.
-
-	LISTASSIGNS 
-	= LISTASSIGN [',' LISTASSIGNS].
-
-	LISTASSIGN 
-	= VALUE.*/
+	= "List"'<' TYPE '>' id '=' '{' VALUE {',' VALUE} '}'.*/
 
 	TYPE <out SymDeclaring e> (. e = null; .)
 	= "void" (. e = new VoidDcl(); .)
@@ -201,6 +165,4 @@ PRODUCTIONS
     | "string" (. e = new StringDcl(); .)
     | "boolean" (. e = new BooleanDcl(); .).
 
-// End of your compiler specification, make sure the name here matches
-// the grammar name at the start of this grammar.
 END ALELA.
