@@ -1,0 +1,1 @@
+coco ALELA.atg -namespace "ALELA_Compiler" -frames "./Frames"

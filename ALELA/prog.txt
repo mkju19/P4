@@ -1,0 +1,38 @@
+int a = 4;
+float f = 2.5;
+int ON = 1;
+int TRUE = 1;
+int OFF = 0;
+int FALSE = 0;
+
+/*-------------------------------------------------------------*/
+
+string pin = "th8is a 2 test !";
+
+setup {
+	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
+	boolean y = 1;
+	y = 1.5;
+	void w;
+	for (a to 100){
+		f = f + 3;
+	}
+}
+
+loop {
+	a = a + 1;
+	test();
+}
+
+int test() {
+	float t = 13.37;
+
+}
+
+/*-------------------------------------------------------------*/
+
+int main() {
+	while(ON){
+		test();
+	}
+}
