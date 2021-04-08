@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ALELA", "ALELA\ALELA.csproj", "{DA2BC2C2-F9BE-4975-A5E8-F3CFC0815E96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ALELA", "ALELA.csproj", "{481F2FE2-FCFC-4933-9934-F1439E96346D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DA2BC2C2-F9BE-4975-A5E8-F3CFC0815E96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DA2BC2C2-F9BE-4975-A5E8-F3CFC0815E96}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DA2BC2C2-F9BE-4975-A5E8-F3CFC0815E96}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DA2BC2C2-F9BE-4975-A5E8-F3CFC0815E96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{481F2FE2-FCFC-4933-9934-F1439E96346D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{481F2FE2-FCFC-4933-9934-F1439E96346D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{481F2FE2-FCFC-4933-9934-F1439E96346D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{481F2FE2-FCFC-4933-9934-F1439E96346D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {450027A5-B435-4DDD-BD1A-57A35692271B}
+		SolutionGuid = {82508A19-109F-44EE-9D72-C4F471CC6808}
 	EndGlobalSection
 EndGlobal
