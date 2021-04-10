@@ -6,7 +6,7 @@ namespace ALELA_Compiler {
     public abstract class AST {
         public static int VOID = 0, INTTYPE = 1, FLTTYPE = 2, STRING = 3, BOOLEAN = 4;
         public int type;
-        public static Dictionary<string, int> SymbolTable = new Dictionary<string, int>();
+        public static Dictionary<Tuple<string, string>, int> SymbolTable = new Dictionary<Tuple<string, string>, int>();
         public abstract void accept(Visitor v);
     }
 

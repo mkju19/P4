@@ -14,7 +14,7 @@ namespace ALELA_Compiler {
             parser.ProgramAST.accept(new SymbolTableFilling());
 
             string dictionaryString = "{";
-            foreach (KeyValuePair<string, int> keyValues in AST.SymbolTable) {
+            foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
                 dictionaryString += keyValues.Key + " : " + keyValues.Value + ", ";
             }
             Console.WriteLine(dictionaryString.TrimEnd(',', ' ') + "}");

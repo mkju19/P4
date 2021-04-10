@@ -15,11 +15,17 @@ setup {
 	y = 1.5;
 	void w;
 	for (a to 100){
+		if (1) {
+		int b;
+			test();
+		}
 		f = f + 3;
 	}
 }
 
 loop {
+	int q = 1;
+	int b;
 	a = a + 1;
 	test();
 }
@@ -33,6 +39,10 @@ int test() {
 
 int main() {
 	while(ON){
+		int b;
+		if (b) {
+			int b = 3;
+		}
 		test();
 	}
 }

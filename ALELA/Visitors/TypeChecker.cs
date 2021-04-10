@@ -4,6 +4,9 @@ using System.Text;
 
 namespace ALELA_Compiler {
     class TypeChecker : Visitor {
+        private int scopeLevel = 1;
+        private List<int> scopekey = new List<int>() { 1 };
+
         public override void visit(Prog n) {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
@@ -11,15 +14,19 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(ProgSetup n) {
+            plusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
+            minusScope();
         }
 
         public override void visit(ProgLoop n) {
+            plusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
+            minusScope();
         }
 
         public override void visit(SymDeclaring n) {
@@ -56,9 +63,11 @@ namespace ALELA_Compiler {
             foreach (SymDeclaring ast in n.declarings) {
                 ast.accept(this);
             }
+            plusScope();
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(SymStatments n) {
@@ -67,31 +76,39 @@ namespace ALELA_Compiler {
 
         public override void visit(IfStmt n) {
             n.logi_expr.accept(this);
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            n.elseIF_Eles.accept(this);
+            minusScope();
+            n.elseIF_Eles?.accept(this);
         }
 
         public override void visit(ElseStmt n) {
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(WhileStmt n) {
             n.logi_expr.accept(this);
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(ForStmt n) {
             n.num_from.accept(this);
             n.num_to.accept(this);
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(SwitchStmt n) {
@@ -101,15 +118,19 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(SwitchCase n) {
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(SwitchDefault n) {
+            plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
+            minusScope();
         }
 
         public override void visit(FunctionStmt n) {
@@ -120,14 +141,14 @@ namespace ALELA_Compiler {
 
         public override void visit(Assigning n) {
             n.child.accept(this);
-            int m = AST.SymbolTable[n.id];
+            int m = AST.SymbolTable[GetKeyVal(n.id)];
             int t = generalize(n.child.type, m);
             n.child = convert(n.child, m);
             n.type = t;
         }
 
         public override void visit(SymReferencing n) {
-            n.type = AST.SymbolTable[n.id];
+            n.type = AST.SymbolTable[GetKeyVal(n.id)];
         }
 
         public override void visit(IntConst n) {
@@ -192,6 +213,32 @@ namespace ALELA_Compiler {
 
         private void error(string message) {
             throw new Exception(message);
+        }
+
+        private void plusScope() {
+            scopeLevel++;
+            if (scopekey.Count <= scopeLevel - 1) scopekey.Add(1);
+        }
+
+        private void minusScope() {
+            scopeLevel--;
+            if (scopekey.Count >= (scopeLevel)) scopekey[scopeLevel]++;
+            if (scopekey.Count >= (scopeLevel + 2)) scopekey.RemoveAt(scopekey.Count - 1);
+        }
+
+        private Tuple<string, string> GetKeyVal(string id) {
+            string val = "";
+            foreach (int key in scopekey) {
+                if (val.Length >= scopeLevel) break;
+                val += key.ToString();
+            }
+            Tuple<string, string> tuple = new Tuple<string, string>(val, id);
+            while (!AST.SymbolTable.ContainsKey(tuple)) {
+                if (val.Length == 0) error("value dose not existe!");
+                val = val.Substring(0, val.Length - 1);
+                tuple = new Tuple<string, string>(val, id);
+            }
+            return tuple;
         }
     }
 }
