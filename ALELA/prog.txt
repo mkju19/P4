@@ -14,10 +14,8 @@ setup {
 	boolean y = 1;
 	y = 1.5;
 	void w;
-	for (a to 100){
+	for (int i = 0; i <= 10; i = i + 1){
 		if (1) {
-		int b;
-			test();
 		}
 		f = f + 3;
 	}
@@ -25,12 +23,11 @@ setup {
 
 loop {
 	int q = 1;
-	int b;
-	a = a + 1;
-	test();
+	float b;
+	a = a + test(q, b);
 }
 
-int test() {
+int test(int numi, float numf) {
 	float t = 13.37;
 
 }
@@ -41,8 +38,8 @@ int main() {
 	while(ON){
 		int b;
 		if (b) {
-			int b = 3;
+			int d = 3;
 		}
-		test();
+		test(b, 3.4);
 	}
 }

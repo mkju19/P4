@@ -74,8 +74,8 @@ PRODUCTIONS
 	List<AST> stm2 = new List<AST>(); string id; e = null; .)
 	= "if" IFELSTMT <out e>
 	| "while" '(' LOGI_EXPR <out logi> ')' BLOCK <out stm> (. e = new WhileStmt(logi, stm); .)
-    | "for" '(' VALUE <out n1> "to" VALUE <out n2> ')'
-		BLOCK <out stm> (. e = new ForStmt(n1, n2, stm); .)
+    | "for" '(' (. n1 = null; .) ( DECL <out n1> | id (. n1 = new SymReferencing(t.val); .) ';' ) LOGI_EXPR <out logi> ';' id (. id = t.val; .) ASSIG <out n2, id> ')'
+		BLOCK <out stm> (. e = new ForStmt(n1, logi, n2, stm); .)
     | "switch" '(' id (. id = t.val; .) ')'
 		'{' "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .)
 		{ "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .) }
@@ -93,10 +93,11 @@ PRODUCTIONS
 	= FUNC <out stm> (. e = new FunctionStmt(id, stm); .)
 	| ASSIG <out e, id>.
 
-	VALUE <out AST e> (. e = null; .)
+	VALUE <out AST e> (. e = null; List<AST> elist = new List<AST>(); .)
 	= intnumber (. e = new IntConst(t.val); .)
 	| floatnumber (. e = new FloatConst(t.val); .)
-	| id (. e = new SymReferencing(t.val); .).
+	| id (. string id = t.val; e = new SymReferencing(id); .)
+	[FUNC <out elist> (. e = new FunctionStmt(id, elist); .) ].
 
 	FUNC <.out List<AST> eo.> (. AST v; List<AST> e = new List<AST>(); .)
 	= '(' [VALUE <out v> (. e.Add(v); .) {',' VALUE <out v> (. e.Add(v); .)}] ')'
@@ -104,7 +105,7 @@ PRODUCTIONS
 
 	FUNCDECL <out AST e> (. SymDeclaring e1 ,e11; List<SymDeclaring> e2 = new List<SymDeclaring>();  List<AST> e3 = new List<AST>(); .)
 	= TYPE <out e1> id (. string idval = t.val; e1.id = idval; .)
-	'(' [TYPE <out e11> id (. e11.id = t.val; .) {',' TYPE <out e11> id (. e11.id = t.val; .)}] ')' BLOCK <out e3>
+	'(' [TYPE <out e11> id (. e11.id = t.val; e2.Add(e11); .) {',' TYPE <out e11> id (. e11.id = t.val;  e2.Add(e11);.)}] ')' BLOCK <out e3>
 	(. e = new FuncDecl(e1, e2, e3); .). // may need extra id
 
 	LOGI_EXPR <out AST e> 

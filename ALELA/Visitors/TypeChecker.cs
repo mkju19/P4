@@ -6,11 +6,14 @@ namespace ALELA_Compiler {
     class TypeChecker : Visitor {
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
+        private List<FuncDecl> funcs = new List<FuncDecl>();
+        private List<FunctionStmt> funcCalls = new List<FunctionStmt>();
 
         public override void visit(Prog n) {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
+            Functioncheck();
         }
 
         public override void visit(ProgSetup n) {
@@ -34,23 +37,23 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(VoidDcl n) {
-            //throw new NotImplementedException();
+            n.type = AST.VOID;
         }
 
         public override void visit(IntDcl n) {
-            //throw new NotImplementedException();
+            n.type = AST.INTTYPE;
         }
 
         public override void visit(FloatDcl n) {
-            //throw new NotImplementedException();
+            n.type = AST.FLTTYPE;
         }
 
         public override void visit(StringDcl n) {
-            //throw new NotImplementedException();
+            n.type = AST.STRING;
         }
 
         public override void visit(BooleanDcl n) {
-            //throw new NotImplementedException();
+            n.type = AST.BOOLEAN;
         }
 
         public override void visit(Decl n) {
@@ -68,6 +71,7 @@ namespace ALELA_Compiler {
                 ast.accept(this);
             }
             minusScope();
+            funcs.Add(n);
         }
 
         public override void visit(SymStatments n) {
@@ -102,9 +106,10 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(ForStmt n) {
-            n.num_from.accept(this);
-            n.num_to.accept(this);
             plusScope();
+            n.stm1.accept(this);
+            n.stm2.accept(this);
+            n.stm3.accept(this);
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
@@ -134,9 +139,11 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(FunctionStmt n) {
+            n.type = AST.SymbolTable[GetKeyVal(n.id)];
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
+            funcCalls.Add(n);
         }
 
         public override void visit(Assigning n) {
@@ -216,13 +223,11 @@ namespace ALELA_Compiler {
         }
 
         private void plusScope() {
-            scopeLevel++;
-            if (scopekey.Count <= scopeLevel - 1) scopekey.Add(1);
+            if (scopekey.Count <= scopeLevel++) scopekey.Add(1);
         }
 
         private void minusScope() {
-            scopeLevel--;
-            if (scopekey.Count >= (scopeLevel)) scopekey[scopeLevel]++;
+            if (scopekey.Count >= (--scopeLevel)) scopekey[scopeLevel]++;
             if (scopekey.Count >= (scopeLevel + 2)) scopekey.RemoveAt(scopekey.Count - 1);
         }
 
@@ -239,6 +244,21 @@ namespace ALELA_Compiler {
                 tuple = new Tuple<string, string>(val, id);
             }
             return tuple;
+        }
+
+        private void Functioncheck() {
+            foreach (FuncDecl item in funcs) {
+                var func = funcCalls.FindAll(x => x.id == item.declaring.id);
+                int parameterAmunt = item.declarings.Count;
+                foreach (FunctionStmt stmt in func) {
+                    if (parameterAmunt != stmt.param_list.Count) error("too many/few parameters");
+                    else {
+                        for (int i = 0; i < parameterAmunt; i++) {
+                            if (item.declarings[i].type != stmt.param_list[i].type) error($"parameter {i} in {stmt.id} is of wrong type");
+                        }
+                    }
+                }
+            }
         }
     }
 }

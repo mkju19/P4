@@ -74,8 +74,14 @@ namespace ALELA_Compiler {
         public override void visit(FuncDecl n) {
             n.declaring.accept(this);
             Console.Write("(");
-            foreach (SymDeclaring ast in n.declarings) {
-                ast.accept(this);
+            if (n.declarings.Count > 0) {
+                SymDeclaring first = n.declarings[0];
+                foreach (SymDeclaring ast in n.declarings) {
+                    if (first != ast) {
+                        Console.Write(", ");
+                    }
+                    ast.accept(this);
+                }
             }
             Console.Write(") {\n");
             foreach (AST ast in n.statments) {
@@ -124,9 +130,10 @@ namespace ALELA_Compiler {
 
         public override void visit(ForStmt n) {
             Console.Write("for(");
-            n.num_from.accept(this);
-            Console.Write(" to ");
-            n.num_to.accept(this);
+            n.stm1.accept(this);
+            n.stm2.accept(this);
+            Console.Write(" ; ");
+            n.stm3.accept(this);
             Console.Write(") {\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
@@ -160,8 +167,14 @@ namespace ALELA_Compiler {
 
         public override void visit(FunctionStmt n) {
             Console.Write($"{n.id}(");
-            foreach (AST ast in n.param_list) {
-                ast.accept(this);
+            if (n.param_list.Count > 0) {
+                AST first = n.param_list[0];
+                foreach (AST ast in n.param_list) {
+                    if (first != ast) {
+                        Console.Write(", ");
+                    }
+                    ast.accept(this);
+                }
             }
             Console.WriteLine(");");
         }

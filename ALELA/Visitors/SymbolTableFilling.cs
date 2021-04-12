@@ -33,27 +33,27 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(VoidDcl n) {
-            if (!AST.SymbolTable.ContainsKey(GetKeyVal(n.id))) AST.SymbolTable.Add(GetKeyVal(n.id), AST.VOID);
+            if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), AST.VOID);
             else error("variable " + n.id + " is already declared");
         }
 
         public override void visit(IntDcl n) {
-            if (!AST.SymbolTable.ContainsKey(GetKeyVal(n.id))) AST.SymbolTable.Add(GetKeyVal(n.id), AST.INTTYPE);
+            if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), AST.INTTYPE);
             else error("variable " + n.id + " is already declared");
         }
 
         public override void visit(FloatDcl n) {
-            if (!AST.SymbolTable.ContainsKey(GetKeyVal(n.id))) AST.SymbolTable.Add(GetKeyVal(n.id), AST.FLTTYPE);
+            if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), AST.FLTTYPE);
             else error("variable " + n.id + " is already declared");
         }
 
         public override void visit(StringDcl n) {
-            if (!AST.SymbolTable.ContainsKey(GetKeyVal(n.id))) AST.SymbolTable.Add(GetKeyVal(n.id), AST.STRING);
+            if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), AST.STRING);
             else error("variable " + n.id + " is already declared");
         }
 
         public override void visit(BooleanDcl n) {
-            if (!AST.SymbolTable.ContainsKey(GetKeyVal(n.id))) AST.SymbolTable.Add(GetKeyVal(n.id), AST.BOOLEAN);
+            if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), AST.BOOLEAN);
             else error("variable " + n.id + " is already declared");
         }
 
@@ -64,10 +64,10 @@ namespace ALELA_Compiler {
 
         public override void visit(FuncDecl n) {
             n.declaring.accept(this);
-            foreach (AST ast in n.declarings) {
-                    ast.accept(this);
-            }
             plusScope();
+            foreach (AST ast in n.declarings) {
+                ast.accept(this);
+            }
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
@@ -106,9 +106,10 @@ namespace ALELA_Compiler {
         }
 
         public override void visit(ForStmt n) {
-            n.num_from.accept(this);
-            n.num_to.accept(this);
             plusScope();
+            n.stm1.accept(this);
+            n.stm2.accept(this);
+            n.stm3.accept(this);
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
@@ -189,13 +190,11 @@ namespace ALELA_Compiler {
         }
 
         private void plusScope() {
-            scopeLevel++;
-            if (scopekey.Count <= scopeLevel - 1) scopekey.Add(1);
+            if (scopekey.Count <= scopeLevel++) scopekey.Add(1);
         }
 
         private void minusScope() {
-            scopeLevel--;
-            if (scopekey.Count >= (scopeLevel)) scopekey[scopeLevel]++;
+            if (scopekey.Count >= --scopeLevel) scopekey[scopeLevel]++;
             if (scopekey.Count >= (scopeLevel + 2)) scopekey.RemoveAt(scopekey.Count - 1);
         }
 
@@ -207,6 +206,16 @@ namespace ALELA_Compiler {
             }
             Tuple<string, string> tuple = new Tuple<string, string>(val, id);
             return tuple;
+        }
+
+        private bool KeyValExists(string id) {
+            string val = "";
+            foreach (int key in scopekey) {
+                if (val.Length >= scopeLevel) break;
+                val += key.ToString();
+                if (AST.SymbolTable.ContainsKey(new Tuple<string, string>(val, id))) return true;
+            }
+            return false;
         }
     }
 }

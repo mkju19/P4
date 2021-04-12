@@ -127,11 +127,12 @@ namespace ALELA_Compiler {
     }
 
     public class ForStmt : SymStatments {
-        public AST num_from, num_to;
+        public AST stm1, stm2, stm3;
         public List<AST> stmt_list;
-        public ForStmt(AST Num_from, AST Num_to, List<AST> Stmt_list) {
-            num_from = Num_from;
-            num_to = Num_to;
+        public ForStmt(AST Stm1, AST Stm2, AST Stm3, List<AST> Stmt_list) {
+            stm1 = Stm1;
+            stm2 = Stm2;
+            stm3 = Stm3;
             stmt_list = Stmt_list;
         }
         public override void accept(Visitor v) { v.visit(this); }
