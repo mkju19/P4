@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ALELA_Compiler": {
+      "commandName": "Project",
+      "commandLineArgs": "./prog.txt -o program.bin"
+    }
+  }
+}

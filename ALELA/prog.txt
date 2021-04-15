@@ -4,6 +4,7 @@ int ON = 1;
 int TRUE = 1;
 int OFF = 0;
 int FALSE = 0;
+boolean qq;
 
 /*-------------------------------------------------------------*/
 
@@ -23,7 +24,7 @@ setup {
 
 loop {
 	int q = 1;
-	float b;
+	float b = 3;
 	a = a + test(q, b);
 }
 
@@ -36,7 +37,7 @@ int test(int numi, float numf) {
 
 int main() {
 	while(ON){
-		int b;
+		int b = 1;
 		if (b) {
 			int d = 3;
 		}

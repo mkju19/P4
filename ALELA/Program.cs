@@ -4,7 +4,9 @@ using System.Collections.Generic;
 namespace ALELA_Compiler {
     class Program {
         static void Main(string[] args) {
-            string file = "./prog.txt";
+            ArgsHandler argsHandler = new ArgsHandler(args);
+            string file = argsHandler.InFile;
+            //string file = "./prog.txt";
             Scanner scanner = new Scanner(file);
             Parser parser = new Parser(scanner);
             parser.Parse();
@@ -22,6 +24,8 @@ namespace ALELA_Compiler {
             Console.WriteLine("  Symbol Table filling successful\n");
             parser.ProgramAST.accept(new TypeChecker());
             Console.WriteLine("  Type Checking successful\n");
+            parser.ProgramAST.accept(new Visitors.InitiationChecker());
+            Console.WriteLine("  Initiation Checking successful\n");
             parser.ProgramAST.accept(new PrettyprintVisitor());
             Console.WriteLine("  Pretty Printing successful\n");
             /*parser.ProgramAST.accept(new CCodeGenerator());
