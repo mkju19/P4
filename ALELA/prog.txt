@@ -5,10 +5,28 @@ int TRUE = 1;
 int OFF = 0;
 int FALSE = 0;
 boolean qq;
+string text = "th8is a 2 test !";
+List<List<string>> testList = {{text}, {"list"}, {"thing"}};
 
 /*-------------------------------------------------------------*/
 
-string pin = "th8is a 2 test !";
+struct pin {
+	int pinNum;
+	int pinMode;
+	int pinPower;
+	void Power(int value) {
+		pinPower = value;
+	}
+	void PowerValue(int value) {
+		if (value < 0) { pinPower = 0; }
+		else if (value > 255) { pinPower = 255; }
+		else { pinPower = value; }
+	}
+};
+
+struct pin led{pinNum = 13, pinMode = 1};
+//led.pinPower = 100;
+int ledPin = led.pinNum;
 
 setup {
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;

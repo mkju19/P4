@@ -11,9 +11,9 @@ namespace ALELA_Compiler {
             Parser parser = new Parser(scanner);
             parser.Parse();
             Console.WriteLine($" {parser.errors.count} errors detected\n");
-            parser.ProgramAST.accept(new PrettyprintVisitor());
+            parser.ProgramAST.accept(new Visitors.PrettyprintVisitor());
             Console.WriteLine("  Pretty Printing successful\n");
-            parser.ProgramAST.accept(new SymbolTableFilling());
+            parser.ProgramAST.accept(new Visitors.SymbolTableFilling());
 
             string dictionaryString = "{";
             foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
@@ -22,14 +22,15 @@ namespace ALELA_Compiler {
             Console.WriteLine(dictionaryString.TrimEnd(',', ' ') + "}");
 
             Console.WriteLine("  Symbol Table filling successful\n");
-            parser.ProgramAST.accept(new TypeChecker());
+            Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
+            parser.ProgramAST.accept(typeChecker);
             Console.WriteLine("  Type Checking successful\n");
-            parser.ProgramAST.accept(new Visitors.InitiationChecker());
+            parser.ProgramAST.accept(new Visitors.InitiationChecker(typeChecker.StructDic));
             Console.WriteLine("  Initiation Checking successful\n");
-            parser.ProgramAST.accept(new PrettyprintVisitor());
+            parser.ProgramAST.accept(new Visitors.PrettyprintVisitor());
             Console.WriteLine("  Pretty Printing successful\n");
-            /*parser.ProgramAST.accept(new CCodeGenerator());
-            Console.WriteLine("\n  C Code Generation successful");*/
+            parser.ProgramAST.accept(new Visitors.CppArduinoCodeGenerator());
+            Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
         }
     }
 }

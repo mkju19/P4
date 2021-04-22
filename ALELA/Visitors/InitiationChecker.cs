@@ -7,21 +7,30 @@ namespace ALELA_Compiler.Visitors {
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
         private Dictionary<Tuple<string, string>, int> InitiationTable = new Dictionary<Tuple<string, string>, int>();
+        private Dictionary<string, List<Tuple<string, int>>> StructDic = new Dictionary<string, List<Tuple<string, int>>>();
+        private string currentStructType = "";
 
-        public InitiationChecker() {
+        public InitiationChecker(Dictionary<string, List<Tuple<string, int>>> Dic) {
             foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
                 InitiationTable.Add(keyValues.Key, 0);
             }
+            foreach (KeyValuePair<string, List<Tuple<string, int>>> structvaluePair in Dic) {
+                List<Tuple<string, int>> structdecls = new List<Tuple<string, int>>(); 
+                foreach (Tuple<string, int> item in structvaluePair.Value) {
+                    structdecls.Add(new Tuple<string, int>(item.Item1, 0));
+                }
+                StructDic.Add(structvaluePair.Key, structdecls);
+            }
         }
 
-        public override void visit(Prog n) {
+        public override void Visit(Prog n) {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
             UnusedVariables();
         }
 
-        public override void visit(ProgSetup n) {
+        public override void Visit(ProgSetup n) {
             plusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
@@ -29,7 +38,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(ProgLoop n) {
+        public override void Visit(ProgLoop n) {
             plusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
@@ -37,47 +46,80 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(SymDeclaring n) {
+        public override void Visit(SymDeclaring n) {
             //throw new NotImplementedException();
         }
 
-        public override void visit(VoidDcl n) {
+        public override void Visit(VoidDcl n) {
         }
 
-        public override void visit(IntDcl n) {
+        public override void Visit(IntDcl n) {
         }
 
-        public override void visit(FloatDcl n) {
+        public override void Visit(FloatDcl n) {
         }
 
-        public override void visit(StringDcl n) {
+        public override void Visit(StringDcl n) {
         }
 
-        public override void visit(BooleanDcl n) {
+        public override void Visit(BooleanDcl n) {
         }
 
-        public override void visit(Decl n) {
+        public override void Visit(StructDcl n) {
+        }
+
+        public override void Visit(ListDcl n) {
+            n.listType.accept(this);
+        }
+
+        public override void Visit(Decl n) {
             n.declaring.accept(this);
             n.assigning?.accept(this);
         }
 
-        public override void visit(FuncDecl n) {
+        public override void Visit(FuncDecl n) {
             n.declaring.accept(this);
+            InitiationTable[GetKey(n.declaring.id)] = 1;
+            plusScope();
             foreach (SymDeclaring ast in n.declarings) {
                 ast.accept(this);
+                InitiationTable[GetKey(ast.id)] = 1;
             }
-            plusScope();
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
             minusScope();
         }
 
-        public override void visit(SymStatments n) {
+        public override void Visit(StructDcel n) {
+            string pastStructType = "";
+            if (currentStructType != "") pastStructType = currentStructType;
+            currentStructType = n.structId;
+            foreach (AST ast in n.declarings) {
+                ast.accept(this);
+            }
+            currentStructType = pastStructType;
+        }
+
+        public override void Visit(StructDef n) {
+            plusScope();
+            foreach (AST ast in n.declarings) {
+                if (ast is SymDeclaring) {
+                    SymDeclaring sym = ast as SymDeclaring;
+                    InitiationTable[GetKey(sym.id)] = 1;
+                } else { 
+                    ast.accept(this);
+                }
+            }
+            StructDic.Remove(n.structType);
+            minusScope();
+        }
+
+        public override void Visit(SymStatments n) {
             throw new NotImplementedException();
         }
 
-        public override void visit(IfStmt n) {
+        public override void Visit(IfStmt n) {
             n.logi_expr.accept(this);
             plusScope();
             foreach (AST ast in n.stmt_list) {
@@ -87,7 +129,7 @@ namespace ALELA_Compiler.Visitors {
             n.elseIF_Eles?.accept(this);
         }
 
-        public override void visit(ElseStmt n) {
+        public override void Visit(ElseStmt n) {
             plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
@@ -95,7 +137,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(WhileStmt n) {
+        public override void Visit(WhileStmt n) {
             n.logi_expr.accept(this);
             plusScope();
             foreach (AST ast in n.stmt_list) {
@@ -104,7 +146,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(ForStmt n) {
+        public override void Visit(ForStmt n) {
             plusScope();
             n.stm1.accept(this);
             n.stm2.accept(this);
@@ -115,13 +157,13 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(SwitchStmt n) {
+        public override void Visit(SwitchStmt n) {
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
         }
 
-        public override void visit(SwitchCase n) {
+        public override void Visit(SwitchCase n) {
             plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
@@ -129,7 +171,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(SwitchDefault n) {
+        public override void Visit(SwitchDefault n) {
             plusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
@@ -137,48 +179,75 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void visit(FunctionStmt n) {
+        public override void Visit(FunctionStmt n) {
             InitiationTable[FindKey(n.id)] = 1;
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
         }
 
-        public override void visit(Assigning n) {
-            InitiationTable[GetKey(n.id)] = 1;
+        public override void Visit(Assigning n) {
+            if (currentStructType != "")
+                if (StructDic[currentStructType].Exists(x => x.Item1 == n.id)) {
+                    Tuple<string, int> tuple = StructDic[currentStructType].Find(x => x.Item1 == n.id);
+                    StructDic[currentStructType].Remove(tuple);
+                    StructDic[currentStructType].Add(new Tuple<string, int>(tuple.Item1, 1));
+                } else error($"{n.id} doesn't exist in {currentStructType}");
+            else InitiationTable[GetKey(n.id)] = 1;
             n.child.accept(this);
         }
 
-        public override void visit(SymReferencing n) {
+        public override void Visit(SymReferencing n) {
             if (!KeyValInit(n.id)) error($"{n.id} at {GetKey(n.id).Item1} is not initiated with a value");
         }
 
-        public override void visit(IntConst n) {
+        public override void Visit(DotReferencing n) {
+            if (n.dotId is SymReferencing) {
+                SymReferencing sym = n.dotId as SymReferencing;
+                if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
+                    error($"{sym.id} doesn't exist in {n.id.id}");
+                if (StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2 != 1)
+                    error($"{sym.id} in {n.id.id} is not initiated with a value");
+            } else if (n.dotId is DotReferencing) {
+                DotReferencing dot = n.dotId as DotReferencing;
+                if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
+                    error($"{dot.id.id} doesn't exist in {n.id.id}");
+                n.dotId.accept(this);
+            }
         }
 
-        public override void visit(FloatConst n) {
+        public override void Visit(BooleanConst n) {
         }
 
-        public override void visit(StringConst n) {
+        public override void Visit(IntConst n) {
         }
 
-        public override void visit(BooleanConst n) {
+        public override void Visit(FloatConst n) {
         }
 
-        public override void visit(Expression n) {
+        public override void Visit(StringConst n) {
+        }
+
+        public override void Visit(ListConst n) {
+            foreach (AST ast in n.declarings) {
+                ast.accept(this);
+            }
+        }
+
+        public override void Visit(Expression n) {
             n.childe1.accept(this);
             n.childe2.accept(this);
         }
 
-        public override void visit(NotExpression n) {
+        public override void Visit(NotExpression n) {
             n.childe.accept(this);
         }
 
-        public override void visit(ConvertingToFloat n) {
+        public override void Visit(ConvertingToFloat n) {
             n.child.accept(this);
         }
 
-        public override void visit(ConvertingToBool n) {
+        public override void Visit(ConvertingToBool n) {
             n.child.accept(this);
         }
 
@@ -232,6 +301,24 @@ namespace ALELA_Compiler.Visitors {
             foreach (KeyValuePair<Tuple<string, string>, int> keyValues in InitiationTable) {
                 if (keyValues.Value != 0) continue;
                 Console.WriteLine($"Variable {keyValues.Key.Item2} at {keyValues.Key.Item1} is not used");
+            }
+            foreach (KeyValuePair<string, List<Tuple<string, int>>> structvaluePair in StructDic) {
+                foreach (Tuple<string, int> item in structvaluePair.Value) {
+                    if (item.Item2 != 0) continue;
+                    Console.WriteLine($"Variable {structvaluePair.Key}.{item.Item1} is not used");
+                }
+            }
+        }
+
+        private string GetLastID(AST node) {
+            if (node is SymReferencing) {
+                SymReferencing sym = node as SymReferencing;
+                return sym.id;
+            } else if (node is DotReferencing) {
+                DotReferencing dot = node as DotReferencing;
+                return GetLastID(dot.dotId);
+            } else {
+                return "";
             }
         }
 

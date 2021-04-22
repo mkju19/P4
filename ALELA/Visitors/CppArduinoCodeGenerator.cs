@@ -3,28 +3,33 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ALELA_Compiler.Visitors {
-    class PrettyprintVisitor : Visitor {
+    class CppArduinoCodeGenerator : Visitor {
+        private string Code = "-------------------------------------------\n";
+        public void emit(string c) {
+            Code = Code + c;
+        }
         public override void Visit(Prog n) {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
-            Console.WriteLine();
+            emit("-------------------------------------------\n");
+            Console.WriteLine(Code);
         }
 
         public override void Visit(ProgSetup n) {
-            Console.WriteLine("setup {");
+            emit("void setup () {\n");
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
         }
 
         public override void Visit(ProgLoop n) {
-            Console.WriteLine("loop {");
+            emit("void loop () {\n");
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("\n}");
         }
 
         public override void Visit(SymDeclaring n) {
@@ -32,92 +37,93 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(VoidDcl n) {
-            Console.Write($"void {n.id} ");
+            emit($"void {n.id} ");
         }
 
         public override void Visit(IntDcl n) {
-            Console.Write($"int {n.id} ");
+            emit($"int {n.id} ");
         }
 
         public override void Visit(FloatDcl n) {
-            Console.Write($"float {n.id} ");
+            emit($"float {n.id} ");
         }
 
         public override void Visit(StringDcl n) {
-            Console.Write($"string {n.id} ");
+            emit($"string {n.id} ");
         }
 
         public override void Visit(BooleanDcl n) {
-            Console.Write($"boolean {n.id} ");
+            emit($"boolean {n.id} ");
         }
 
         public override void Visit(StructDcl n) {
-            Console.Write($"struct {n.id} ");
+            emit($"struct {n.id} ");
         }
 
         public override void Visit(ListDcl n) {
-            Console.Write($"List<");
+            emit($"List<");
             n.listType.accept(this); // TODO change?
-            Console.Write($"> {n.id} ");
+            emit($"> {n.id} ");
         }
 
         public override void Visit(Decl n) {
-            if (n.assigning != null) {
+            if (n.assigning != null && !(n.declaring is VoidDcl)) {
                 n.declaring.accept(this);
-                Console.CursorLeft -= n.declaring.id.Length + 1;
+                Code = Code.Remove((Code.Length - n.declaring.id.Length) - 1);
                 n.assigning.accept(this);
-            } else {
+            } else if (!(n.declaring is VoidDcl)) {
                 n.declaring.accept(this);
-                Console.WriteLine(";") ;
+                emit(";\n");
             }
         }
 
         public override void Visit(FuncDecl n) {
             n.declaring.accept(this);
-            Console.Write("(");
+            emit("(");
             if (n.declarings.Count > 0) {
                 SymDeclaring first = n.declarings[0];
                 foreach (SymDeclaring ast in n.declarings) {
                     if (first != ast) {
-                        Console.Write(", ");
+                        emit(", ");
                     }
                     ast.accept(this);
                 }
             }
-            Console.Write(") {\n");
+            emit(") {\n");
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
         }
 
         public override void Visit(StructDcel n) {
-            Console.Write("{");
+            emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
                 foreach (AST ast in n.declarings) {
                     if (first != ast) {
-                        Console.Write(", ");
+                        emit(", ");
                     }
                     ast.accept(this);
+                    Code = Code.Remove(Code.Length - 2);
                 }
             }
-            Console.Write("}\n");
+            emit("}");
         }
 
         public override void Visit(StructDef n) {
-            Console.Write("{\n");
+            emit("{\n");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
                 foreach (AST ast in n.declarings) {
                     if (first != ast) {
-                        Console.Write("\n");
+                        emit("\n");
                     }
                     ast.accept(this);
-                    if (ast is SymDeclaring) Console.Write(";");
+                    if (ast is SymDeclaring) emit(";");
                 }
             }
-            Console.Write("}\n");
+            emit("}");
         }
 
         public override void Visit(SymStatments n) {
@@ -125,20 +131,20 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(IfStmt n) {
-            Console.Write("if(");
+            emit("if(");
             n.logi_expr.accept(this);
-            Console.Write(") {\n");
+            emit(") {\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
             if (n.elseIF_Eles is IfStmt) {
-                Console.Write("else ");
+                emit("else ");
                 n.elseIF_Eles.accept(this);
             } else if (n.elseIF_Eles is ElseStmt) {
-                Console.Write("else {");
+                emit("else {");
                 n.elseIF_Eles.accept(this);
-                Console.Write("}");
+                emit("}");
             }
         }
 
@@ -149,150 +155,130 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(WhileStmt n) {
-            Console.Write("while(");
+            emit("while(");
             n.logi_expr.accept(this);
-            Console.Write(") {\n");
+            emit(") {\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
         }
 
         public override void Visit(ForStmt n) {
-            Console.Write("for(");
+            emit("for(");
             n.stm1.accept(this);
             n.stm2.accept(this);
-            Console.Write(" ; ");
+            emit(" ; ");
             n.stm3.accept(this);
-            Console.Write(") {\n");
+            if (Code[Code.Length - 2] == ';') Code = Code.Remove(Code.Length - 2);
+            emit(") {\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
         }
 
         public override void Visit(SwitchStmt n) {
-            Console.Write($"switch( {n.id} )" + "{\n");
+            emit($"switch( {n.id} )" + "{\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            emit("}\n");
         }
 
         public override void Visit(SwitchCase n) {
-            Console.WriteLine($"case {n.id}" + "{");
+            emit($"case {n.id} :\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            //emit("}\n");
         }
 
         public override void Visit(SwitchDefault n) {
-            Console.WriteLine($"default" + "{");
+            emit($"default :\n");
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            Console.WriteLine("}");
+            //emit("}\n");
         }
 
         public override void Visit(FunctionStmt n) {
-            Console.Write($"{n.id}(");
+            emit($"{n.id}(");
             if (n.param_list.Count > 0) {
                 AST first = n.param_list[0];
                 foreach (AST ast in n.param_list) {
                     if (first != ast) {
-                        Console.Write(", ");
+                        emit(", ");
                     }
                     ast.accept(this);
                 }
             }
-            Console.WriteLine(");");
+            emit(");\n");
         }
 
         public override void Visit(Assigning n) {
-            Console.Write($"{n.id} ");
-            if (!(n.child is StructDef || n.child is StructDcel)) Console.Write("= ");
+            emit($"{n.id} = ");
             n.child.accept(this);
-            Console.WriteLine(";");
+            emit(";\n");
         }
 
         public override void Visit(SymReferencing n) {
-            Console.Write($"{n.id}");
+            emit($"{n.id}");
         }
 
         public override void Visit(DotReferencing n) {
-            n.id.accept(this);
-            Console.Write($".");
-            n.dotId.accept(this);
+            //throw new NotImplementedException();
         }
 
         public override void Visit(BooleanConst n) {
-            Console.Write($"{n.val}");
+            emit($"{n.val}");
         }
 
         public override void Visit(IntConst n) {
-            Console.Write($"{n.val}");
+            emit($"{n.val}");
         }
 
         public override void Visit(FloatConst n) {
-            Console.Write($"{n.val}");
+            emit($"{n.val}");
         }
 
         public override void Visit(StringConst n) {
-            Console.Write($"{n.val}");
+            emit($"{n.val}");
         }
 
         public override void Visit(ListConst n) {
-            Console.Write("{");
+            emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
                 foreach (AST ast in n.declarings) {
                     if (first != ast) {
-                        Console.Write(", ");
+                        emit(", ");
                     }
                     ast.accept(this);
                 }
             }
-            Console.Write("}");
+            emit("}");
         }
 
         public override void Visit(Expression n) {
             n.childe1.accept(this);
-            Console.Write($" {n.operation} ");
+            emit($" {n.operation} ");
             n.childe2?.accept(this);
         }
 
         public override void Visit(NotExpression n) {
-            Console.Write($"!");
+            emit($"!");
             n.childe.accept(this);
         }
 
         public override void Visit(ConvertingToFloat n) {
-            Console.Write(" i2f ");
+            //Console.Write(" i2f ");
             n.child.accept(this);
         }
 
         public override void Visit(ConvertingToBool n) {
-            Console.Write(" v2b ");
+            //Console.Write(" v2b ");
             n.child.accept(this);
-        }
-
-        private string GetType(AST node) {
-            if (node is VoidDcl) {
-                return "void ";
-            } else if (node is IntDcl) {
-                return "int ";
-            } else if (node is FloatDcl) {
-                return "float ";
-            } else if (node is StringDcl) {
-                return "string ";
-            } else if (node is BooleanDcl) {
-                return "boolean ";
-            } else if (node is ListDcl) {
-                return "List ";
-            } else {
-                return "";
-            }
         }
     }
 }

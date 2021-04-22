@@ -4,38 +4,44 @@ using System.Text;
 
 namespace ALELA_Compiler {
     public abstract class Visitor {
-		public void visit(AST n) {
+		public void Visit(AST n) {
 			n.accept(this);
 		}
-		public abstract void visit(Prog n);
-		public abstract void visit(ProgSetup n);
-		public abstract void visit(ProgLoop n);
-		public abstract void visit(SymDeclaring n);
-		public abstract void visit(VoidDcl n);
-		public abstract void visit(IntDcl n);
-		public abstract void visit(FloatDcl n);
-		public abstract void visit(StringDcl n);
-		public abstract void visit(BooleanDcl n);
-		public abstract void visit(Decl n);
-		public abstract void visit(FuncDecl n);
-		public abstract void visit(SymStatments n);
-		public abstract void visit(IfStmt n);
-		public abstract void visit(ElseStmt n);
-		public abstract void visit(WhileStmt n);
-		public abstract void visit(ForStmt n);
-		public abstract void visit(SwitchStmt n);
-		public abstract void visit(SwitchCase n);
-		public abstract void visit(SwitchDefault n);
-		public abstract void visit(FunctionStmt n);
-		public abstract void visit(Assigning n);
-		public abstract void visit(SymReferencing n);
-		public abstract void visit(IntConst n);
-		public abstract void visit(FloatConst n);
-		public abstract void visit(StringConst n);
-		public abstract void visit(BooleanConst n);
-		public abstract void visit(Expression n);
-		public abstract void visit(NotExpression n);
-		public abstract void visit(ConvertingToFloat n);
-		public abstract void visit(ConvertingToBool n);
+		public abstract void Visit(Prog n);
+		public abstract void Visit(ProgSetup n);
+		public abstract void Visit(ProgLoop n);
+		public abstract void Visit(SymDeclaring n);
+		public abstract void Visit(VoidDcl n);
+		public abstract void Visit(IntDcl n);
+		public abstract void Visit(FloatDcl n);
+		public abstract void Visit(StringDcl n);
+		public abstract void Visit(BooleanDcl n);
+		public abstract void Visit(StructDcl n);
+		public abstract void Visit(ListDcl n);
+		public abstract void Visit(Decl n);
+		public abstract void Visit(FuncDecl n);
+		public abstract void Visit(StructDcel n);
+		public abstract void Visit(StructDef n);
+		public abstract void Visit(SymStatments n);
+		public abstract void Visit(IfStmt n);
+		public abstract void Visit(ElseStmt n);
+		public abstract void Visit(WhileStmt n);
+		public abstract void Visit(ForStmt n);
+		public abstract void Visit(SwitchStmt n);
+		public abstract void Visit(SwitchCase n);
+		public abstract void Visit(SwitchDefault n);
+		public abstract void Visit(FunctionStmt n);
+		public abstract void Visit(Assigning n);
+		public abstract void Visit(SymReferencing n);
+		public abstract void Visit(DotReferencing n);
+		public abstract void Visit(BooleanConst n);
+		public abstract void Visit(IntConst n);
+		public abstract void Visit(FloatConst n);
+		public abstract void Visit(StringConst n);
+		public abstract void Visit(ListConst n);
+		public abstract void Visit(Expression n);
+		public abstract void Visit(NotExpression n);
+		public abstract void Visit(ConvertingToFloat n);
+		public abstract void Visit(ConvertingToBool n);
 	}
 }

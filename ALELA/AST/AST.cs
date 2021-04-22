@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ALELA_Compiler {
     public abstract class AST {
-        public static int VOID = 0, INTTYPE = 1, FLTTYPE = 2, STRING = 3, BOOLEAN = 4;
+        public static int VOID = 0, BOOLEAN = 1, INTTYPE = 2, FLTTYPE = 3, STRING = 4, STRUCT = 5, LIST = 6;
         public int type;
         public static Dictionary<Tuple<string, string>, int> SymbolTable = new Dictionary<Tuple<string, string>, int>();
         public abstract void accept(Visitor v);
@@ -15,7 +15,7 @@ namespace ALELA_Compiler {
         public Prog(List<AST> prg) {
             prog = prg;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ProgSetup : AST {
@@ -23,7 +23,7 @@ namespace ALELA_Compiler {
         public ProgSetup(List<AST> prg) {
             prog = prg;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ProgLoop : AST {
@@ -31,42 +31,55 @@ namespace ALELA_Compiler {
         public ProgLoop(List<AST> prg) {
             prog = prg;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public abstract class SymDeclaring : AST {
         public string id;
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class VoidDcl : SymDeclaring {
         public VoidDcl() { }
         public VoidDcl(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class IntDcl : SymDeclaring {
         public IntDcl() {}
         public IntDcl(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class FloatDcl : SymDeclaring {
         public FloatDcl() {}
         public FloatDcl(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class StringDcl : SymDeclaring {
         public StringDcl() {}
         public StringDcl(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class BooleanDcl : SymDeclaring {
         public BooleanDcl() {}
         public BooleanDcl(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class StructDcl : SymDeclaring {
+        public StructDcl() { }
+        public StructDcl(string i) { id = i; }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class ListDcl : SymDeclaring {
+        public SymDeclaring listType;
+        public ListDcl(SymDeclaring ListType) { listType = ListType; }
+        public ListDcl(string i, SymDeclaring ListType) { id = i; listType = ListType; }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class Decl : AST {
@@ -76,7 +89,7 @@ namespace ALELA_Compiler {
             declaring = Declaring;
             assigning = Assigning;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class FuncDecl : AST {
@@ -88,12 +101,31 @@ namespace ALELA_Compiler {
             declarings = Declarings;
             statments = Statments;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class StructDcel : AST {
+        public string structType, structId;
+        public List<AST> declarings;
+        public StructDcel(string StructType, List<AST> Declarings) {
+            structType = StructType;
+            declarings = Declarings;
+        }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class StructDef : AST {
+        public string structType;
+        public List<AST> declarings;
+        public StructDef(List<AST> Declarings) {
+            declarings = Declarings;
+        }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public abstract class SymStatments : AST {
         //public SymStatments(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class IfStmt : SymStatments {
@@ -105,7 +137,7 @@ namespace ALELA_Compiler {
             stmt_list = Stmt_list;
             elseIF_Eles = ElseIF_Eles;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ElseStmt : SymStatments {
@@ -113,7 +145,7 @@ namespace ALELA_Compiler {
         public ElseStmt(List<AST> Stmt_list) {
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class WhileStmt : SymStatments {
@@ -123,7 +155,7 @@ namespace ALELA_Compiler {
             logi_expr = Logi_expr;
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ForStmt : SymStatments {
@@ -135,7 +167,7 @@ namespace ALELA_Compiler {
             stm3 = Stm3;
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class SwitchStmt : SymStatments {
@@ -145,7 +177,7 @@ namespace ALELA_Compiler {
             id = Id;
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class SwitchCase : AST {
@@ -155,7 +187,7 @@ namespace ALELA_Compiler {
             id = Id;
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class SwitchDefault : AST {
@@ -163,7 +195,7 @@ namespace ALELA_Compiler {
         public SwitchDefault(List<AST> Stmt_list) {
             stmt_list = Stmt_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class FunctionStmt : SymStatments {
@@ -173,44 +205,60 @@ namespace ALELA_Compiler {
             id = Id;
             param_list = Param_list;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class Assigning : SymStatments {
         public string id;
         public AST child;
         public Assigning(string i, AST ch1) { id = i; child = ch1; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class SymReferencing : AST {
         public string id;
         public SymReferencing(string i) { id = i; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class IntConst : AST {
-        public string val;
-        public IntConst(string v) { val = v; }
-        public override void accept(Visitor v) { v.visit(this); }
-    }
+    public class DotReferencing : AST {
+        public SymReferencing id;
+        public AST dotId;
+        public DotReferencing(AST Id, AST DotId) { id = Id as SymReferencing; dotId = DotId; }
+        public override void accept(Visitor v) { v.Visit(this); }
 
-    public class FloatConst : AST {
-        public string val;
-        public FloatConst(string v) { val = v; }
-        public override void accept(Visitor v) { v.visit(this); }
-    }
-
-    public class StringConst : AST {
-        public string val;
-        public StringConst(string v) { val = v; }
-        public override void accept(Visitor v) { v.visit(this); }
     }
 
     public class BooleanConst : AST {
         public string val;
         public BooleanConst(string v) { val = v; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class IntConst : AST {
+        public string val;
+        public IntConst(string v) { val = v; }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class FloatConst : AST {
+        public string val;
+        public FloatConst(string v) { val = v; }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class StringConst : AST {
+        public string val;
+        public StringConst(string v) { val = v; }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class ListConst : AST {
+        public List<AST> declarings;
+        public ListConst(List<AST> Declarings) {
+            declarings = Declarings;
+        }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class Expression : AST {
@@ -221,7 +269,7 @@ namespace ALELA_Compiler {
             childe1 = ch1;
             childe2 = ch2;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class NotExpression : AST {
@@ -229,18 +277,18 @@ namespace ALELA_Compiler {
         public NotExpression(AST ch1) {
             childe = ch1;
         }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ConvertingToFloat : AST {
         public AST child;
         public ConvertingToFloat(AST n) { child = n; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 
     public class ConvertingToBool : AST {
         public AST child;
         public ConvertingToBool(AST n) { child = n; }
-        public override void accept(Visitor v) { v.visit(this); }
+        public override void accept(Visitor v) { v.Visit(this); }
     }
 }
