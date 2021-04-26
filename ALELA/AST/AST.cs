@@ -105,9 +105,9 @@ namespace ALELA_Compiler {
     }
 
     public class StructDcel : AST {
-        public string structType, structId;
+        public AST structType, structId;
         public List<AST> declarings;
-        public StructDcel(string StructType, List<AST> Declarings) {
+        public StructDcel(AST StructType, List<AST> Declarings) {
             structType = StructType;
             declarings = Declarings;
         }
@@ -115,7 +115,7 @@ namespace ALELA_Compiler {
     }
 
     public class StructDef : AST {
-        public string structType;
+        public AST structType;
         public List<AST> declarings;
         public StructDef(List<AST> Declarings) {
             declarings = Declarings;
@@ -199,9 +199,9 @@ namespace ALELA_Compiler {
     }
 
     public class FunctionStmt : SymStatments {
-        public string id;
+        public AST id;
         public List<AST> param_list;
-        public FunctionStmt(string Id, List<AST> Param_list) {
+        public FunctionStmt(AST Id, List<AST> Param_list) {
             id = Id;
             param_list = Param_list;
         }
@@ -209,9 +209,9 @@ namespace ALELA_Compiler {
     }
 
     public class Assigning : SymStatments {
-        public string id;
+        public AST id;
         public AST child;
-        public Assigning(string i, AST ch1) { id = i; child = ch1; }
+        public Assigning(AST i, AST ch1) { id = i; child = ch1; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 

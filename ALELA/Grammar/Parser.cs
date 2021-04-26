@@ -89,7 +89,7 @@ public Prog ProgramAST;
 	
 	void ALELA() {
 		List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>();
-		AST e; SymDeclaring e1 = null; string idval; 
+		AST e; SymDeclaring e1 = null; AST idval; 
 		DECL(out e);
 		liste.Add(e); 
 		while (StartOf(1)) {
@@ -111,20 +111,21 @@ public Prog ProgramAST;
 	}
 
 	void DECL(out AST e) {
-		SymDeclaring e1; AST e2 = null; StructDcel es = null; string idval; List<AST> el = new List<AST>(); 
+		SymDeclaring e1; AST e2 = null; StructDcel es = null;
+		AST idval; List<AST> el = new List<AST>(); 
 		DCL(out e1, out idval);
 		if (la.kind == 3 || la.kind == 8 || la.kind == 10) {
 			if (la.kind == 8 || la.kind == 10) {
 				ASSIG(out e2, idval);
 			} else {
 				Get();
-				string structid = t.val; 
+				AST structid = new SymReferencing(t.val); string idofstruct = t.val; 
 				if (la.kind == 8) {
 					Get();
 					STRUCTDECL(out el);
 				}
 				es = new StructDcel(idval, el); es.structId = structid; 
-				e2 = new Assigning(structid, es); e1.id = structid;
+				e2 = new Assigning(structid, es); e1.id = idofstruct;
 			}
 		}
 		e = new Decl(e1, e2); 
@@ -142,10 +143,10 @@ public Prog ProgramAST;
 		eo = e2; 
 	}
 
-	void DCL(out SymDeclaring e, out string idval) {
+	void DCL(out SymDeclaring e, out AST idval) {
 		TYPE(out e);
 		Expect(3);
-		idval = t.val; e.id = t.val; 
+		idval = new SymReferencing(t.val); e.id = t.val; 
 	}
 
 	void FUNCDECL(out AST e, SymDeclaring e1) {
@@ -167,7 +168,7 @@ public Prog ProgramAST;
 		e = new FuncDecl(e1, e2, e3); 
 	}
 
-	void ASSIG(out AST e, string idval) {
+	void ASSIG(out AST e, AST idval) {
 		e = null; 
 		if (la.kind == 10) {
 			Get();
@@ -182,13 +183,13 @@ public Prog ProgramAST;
 	void STRUCTDECL(out List<AST> eo) {
 		AST e; List<AST> e2 = new List<AST>(); 
 		Expect(3);
-		string idval = t.val; 
+		AST idval = new SymReferencing(t.val); 
 		ASSIG(out e, idval);
 		e2.Add(e); 
 		while (la.kind == 12) {
 			Get();
 			Expect(3);
-			idval = t.val; 
+			idval = new SymReferencing(t.val); 
 			ASSIG(out e, idval);
 			e2.Add(e); 
 		}
@@ -248,7 +249,7 @@ public Prog ProgramAST;
 		}
 	}
 
-	void STRUCTDEF(out AST eo, string idval) {
+	void STRUCTDEF(out AST eo, AST idval) {
 		List<AST> e2 = new List<AST>(); AST e; StructDef ed; 
 		STRUCTFIELD(out e);
 		e2.Add(e); 
@@ -261,7 +262,7 @@ public Prog ProgramAST;
 	}
 
 	void STRUCTFIELD(out AST eo) {
-		string idval; SymDeclaring e; eo = null; 
+		AST idval; SymDeclaring e; eo = null; 
 		DCL(out e, out idval);
 		if (la.kind == 9) {
 			Get();
@@ -273,7 +274,7 @@ public Prog ProgramAST;
 
 	void STMT(out AST e) {
 		AST logi, n1, n2; List<AST> stm = new List<AST>();
-		List<AST> stm2 = new List<AST>(); string id; e = null; 
+		List<AST> stm2 = new List<AST>(); string id; AST astid; e = null; 
 		switch (la.kind) {
 		case 13: {
 			Get();
@@ -303,8 +304,8 @@ public Prog ProgramAST;
 			LOGI_EXPR(out logi);
 			Expect(9);
 			Expect(3);
-			id = t.val; 
-			ASSIG(out n2, id);
+			astid = new SymReferencing(t.val); 
+			ASSIG(out n2, astid);
 			Expect(16);
 			BLOCK(out stm);
 			e = new ForStmt(n1, logi, n2, stm); 
@@ -341,7 +342,7 @@ public Prog ProgramAST;
 		}
 		case 3: {
 			IDENTIFIER(out e, out id);
-			CALL(id, out e);
+			CALL(e, out e);
 			Expect(9);
 			break;
 		}
@@ -390,7 +391,7 @@ public Prog ProgramAST;
 		}
 	}
 
-	void CALL(string id, out AST e) {
+	void CALL(AST id, out AST e) {
 		e = null; List<AST> stm = new List<AST>(); 
 		if (la.kind == 15) {
 			FUNC(out stm);
@@ -433,7 +434,7 @@ public Prog ProgramAST;
 			IDENTIFIER(out e, out id);
 			if (la.kind == 15) {
 				FUNC(out elist);
-				e = new FunctionStmt(id, elist); 
+				e = new FunctionStmt(e, elist); 
 			}
 		} else SynErr(53);
 	}

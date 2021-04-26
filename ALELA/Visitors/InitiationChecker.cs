@@ -94,7 +94,8 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(StructDcel n) {
             string pastStructType = "";
             if (currentStructType != "") pastStructType = currentStructType;
-            currentStructType = n.structId;
+            SymReferencing current = n.structId as SymReferencing;
+            currentStructType = current.id;
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
             }
@@ -111,7 +112,8 @@ namespace ALELA_Compiler.Visitors {
                     ast.accept(this);
                 }
             }
-            StructDic.Remove(n.structType);
+            SymReferencing current = n.structType as SymReferencing;
+            StructDic.Remove(current.id);
             minusScope();
         }
 
@@ -180,20 +182,31 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            InitiationTable[FindKey(n.id)] = 1;
+            SymReferencing current = n.id as SymReferencing;
+            InitiationTable[FindKey(current.id)] = 1;
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
         }
 
         public override void Visit(Assigning n) {
+            SymReferencing current = n.id as SymReferencing;
             if (currentStructType != "")
-                if (StructDic[currentStructType].Exists(x => x.Item1 == n.id)) {
-                    Tuple<string, int> tuple = StructDic[currentStructType].Find(x => x.Item1 == n.id);
+                if (StructDic[currentStructType].Exists(x => x.Item1 == current.id)) {
+                    Tuple<string, int> tuple = StructDic[currentStructType].Find(x => x.Item1 == current.id);
                     StructDic[currentStructType].Remove(tuple);
                     StructDic[currentStructType].Add(new Tuple<string, int>(tuple.Item1, 1));
                 } else error($"{n.id} doesn't exist in {currentStructType}");
-            else InitiationTable[GetKey(n.id)] = 1;
+            else if (n.id is DotReferencing) {
+                DotReferencing dot = n.id as DotReferencing;
+                SymReferencing dotid = dot.dotId as SymReferencing;
+                SymReferencing id = dot.id as SymReferencing;
+                if (StructDic[id.id].Exists(x => x.Item1 == dotid.id)) {
+                    Tuple<string, int> tuple = StructDic[id.id].Find(x => x.Item1 == dotid.id);
+                    StructDic[id.id].Remove(tuple);
+                    StructDic[id.id].Add(new Tuple<string, int>(tuple.Item1, 1));
+                } else error($"{dotid.id} doesn't exist in {id.id}");
+            } else InitiationTable[GetKey(current.id)] = 1;
             n.child.accept(this);
         }
 

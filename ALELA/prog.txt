@@ -25,10 +25,10 @@ struct pin {
 };
 
 struct pin led{pinNum = 13, pinMode = 1};
-//led.pinPower = 100;
 int ledPin = led.pinNum;
 
 setup {
+	led.pinPower = 100;
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
 	boolean y = 1;
 	y = 1.5;

@@ -35,7 +35,7 @@ PRAGMAS
 PRODUCTIONS
 
 	ALELA (. List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>();
-			AST e; SymDeclaring e1 = null; string idval; .)
+			AST e; SymDeclaring e1 = null; AST idval; .)
 	= DECL <out e> (. liste.Add(e); .)
 	{ DECL <out e> (. liste.Add(e); .) }
 	"setup" BLOCK <out elist> (. liste.Add(new ProgSetup(elist)); .)
@@ -43,32 +43,33 @@ PRODUCTIONS
 	{DCL <out e1, out idval> FUNCDECL <out e, e1> (. liste.Add(e); .)}
 	(. ProgramAST = new Prog(liste); .).
     
-	DECL <out AST e> (. SymDeclaring e1; AST e2 = null; StructDcel es = null; string idval; List<AST> el = new List<AST>(); .)
+	DECL <out AST e> (. SymDeclaring e1; AST e2 = null; StructDcel es = null;
+	AST idval; List<AST> el = new List<AST>(); .)
 	= DCL <out e1, out idval>
 		[( ASSIG <out e2, idval> 
-		| id (. string structid = t.val; .) ['{' STRUCTDECL <out el>]
+		| id (. AST structid = new SymReferencing(t.val); string idofstruct = t.val; .) ['{' STRUCTDECL <out el>]
 			(. es = new StructDcel(idval, el); es.structId = structid; .)
-			(. e2 = new Assigning(structid, es); e1.id = structid;.))]
+			(. e2 = new Assigning(structid, es); e1.id = idofstruct;.))]
 	(. e = new Decl(e1, e2); .)';'.
 
-	DCL <out SymDeclaring e, out string idval>
-	= TYPE <out e> id (. idval = t.val; e.id = t.val; .).
+	DCL <out SymDeclaring e, out AST idval>
+	= TYPE <out e> id (. idval = new SymReferencing(t.val); e.id = t.val; .).
 
-	ASSIG <out AST e, string idval> (. e = null; .)
+	ASSIG <out AST e, AST idval> (. e = null; .)
 	= ( '=' EXPR <out e>
 	| '{' STRUCTDEF <out e, idval> )
 	(. e = new Assigning(idval, e); .).
 
-	STRUCTDEF <out AST eo, string idval> (. List<AST> e2 = new List<AST>(); AST e; StructDef ed; .)
+	STRUCTDEF <out AST eo, AST idval> (. List<AST> e2 = new List<AST>(); AST e; StructDef ed; .)
 	= STRUCTFIELD <out e> (. e2.Add(e); .) {STRUCTFIELD <out e> (. e2.Add(e); .) } '}'
 	(. ed = new StructDef(e2); ed.structType = idval; eo = ed; .).
 	
-	STRUCTFIELD <out AST eo> (. string idval; SymDeclaring e; eo = null; .)
+	STRUCTFIELD <out AST eo> (. AST idval; SymDeclaring e; eo = null; .)
 	= DCL <out e, out idval> (';' (. eo = e; .) | FUNCDECL <out eo, e> ).
     
 	STRUCTDECL <.out List<AST> eo.> (. AST e; List<AST> e2 = new List<AST>(); .)
-	= id (. string idval = t.val; .) ASSIG <out e, idval> (. e2.Add(e); .)
-	{',' id (. idval = t.val; .) ASSIG <out e, idval> (. e2.Add(e); .) } '}'
+	= id (. AST idval = new SymReferencing(t.val); .) ASSIG <out e, idval> (. e2.Add(e); .)
+	{',' id (. idval = new SymReferencing(t.val); .) ASSIG <out e, idval> (. e2.Add(e); .) } '}'
 	(. eo = e2; .).
 
 	BLOCK <. out List<AST> eo .> (. AST e; List<AST> e2 = new List<AST>(); .)
@@ -76,17 +77,18 @@ PRODUCTIONS
 
 	STMT <out AST e>
 	(. AST logi, n1, n2; List<AST> stm = new List<AST>();
-	List<AST> stm2 = new List<AST>(); string id; e = null; .)
+	List<AST> stm2 = new List<AST>(); string id; AST astid; e = null; .)
 	= "if" IFELSTMT <out e>
 	| "while" '(' LOGI_EXPR <out logi> ')' BLOCK <out stm> (. e = new WhileStmt(logi, stm); .)
-    | "for" '(' (. n1 = null; .) ( DECL <out n1> | id (. n1 = new SymReferencing(t.val); .) ';' ) LOGI_EXPR <out logi> ';' id (. id = t.val; .) ASSIG <out n2, id> ')'
+    | "for" '(' (. n1 = null; .) ( DECL <out n1> | id (. n1 = new SymReferencing(t.val); .) ';' ) LOGI_EXPR <out logi> ';' 
+		id (. astid = new SymReferencing(t.val); .) ASSIG <out n2, astid> ')'
 		BLOCK <out stm> (. e = new ForStmt(n1, logi, n2, stm); .)
     | "switch" '(' id (. id = t.val; .) ')'
 		'{' "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .)
 		{ "case" id (. id = t.val; .) ':' BLOCK <out stm2> (. stm.Add(new SwitchCase(id, stm2)); .) }
 		"default" ':' BLOCK <out stm2> (. stm.Add(new SwitchDefault(stm2)); .) '}'
 		(. e = new SwitchStmt(id, stm); .)
-    | IDENTIFIER <out e, out id> CALL <id, out e> ';'
+    | IDENTIFIER <out e, out id> CALL <e, out e> ';'
     | DECL <out e> .
 
 	IFELSTMT <out AST e> (. List<AST> stm, stm2 = new List<AST>(); AST els = null; .)
@@ -94,7 +96,7 @@ PRODUCTIONS
 	[ "else" ( BLOCK <out stm2> (. els = new ElseStmt(stm2); .) | "if" IFELSTMT <out els> )]
 	(. e = new IfStmt(logi, stm, els); .).
 
-	CALL <string id, out AST e> (. e = null; List<AST> stm = new List<AST>(); .)
+	CALL <AST id, out AST e> (. e = null; List<AST> stm = new List<AST>(); .)
 	= FUNC <out stm> (. e = new FunctionStmt(id, stm); .)
 	| ASSIG <out e, id>.
 
@@ -104,7 +106,7 @@ PRODUCTIONS
 	| floatnumber (. e = new FloatConst(t.val); .)
 	| stringtext (. e = new StringConst(t.val); .)
 	| LISTCONST <out e>
-	| IDENTIFIER <out e, out id> [FUNC <out elist> (. e = new FunctionStmt(id, elist); .)].
+	| IDENTIFIER <out e, out id> [FUNC <out elist> (. e = new FunctionStmt(e, elist); .)].
 	
 	IDENTIFIER <out AST e, out string id> (. e = null; List<AST> elist = new List<AST>(); AST ei = null; .)
 	= id (. id = t.val; e = new SymReferencing(id); .)

@@ -203,7 +203,8 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            emit($"{n.id}(");
+            n.id.accept(this);
+            emit($"(");
             if (n.param_list.Count > 0) {
                 AST first = n.param_list[0];
                 foreach (AST ast in n.param_list) {
@@ -217,7 +218,12 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(Assigning n) {
-            emit($"{n.id} = ");
+            if (n.id is SymReferencing) {
+                SymReferencing sym = n.id as SymReferencing;
+                emit($"{sym.id} ");
+            } else if (n.id is DotReferencing) {
+                n.id.accept(this);
+            } else emit($"{n.id} = ");
             n.child.accept(this);
             emit(";\n");
         }

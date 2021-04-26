@@ -89,7 +89,8 @@ namespace ALELA_Compiler.Visitors {
             n.type = AST.STRUCT;
             string pastStructType = "";
             if (currentStructType != "") pastStructType = currentStructType;
-            currentStructType = n.structType;
+            SymReferencing current = n.structType as SymReferencing;
+            currentStructType = current.id;
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
 
@@ -113,7 +114,8 @@ namespace ALELA_Compiler.Visitors {
                 }
             }
             minusScope();
-            StructDic.Add(n.structType, tuples);
+            SymReferencing current = n.structType as SymReferencing;
+            StructDic.Add(current.id, tuples);
         }
 
         public override void Visit(SymStatments n) {
@@ -181,7 +183,8 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            n.type = AST.SymbolTable[GetKeyVal(n.id)];
+            SymReferencing current = n.id as SymReferencing;
+            n.type = AST.SymbolTable[GetKeyVal(current.id)];
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
@@ -191,17 +194,25 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(Assigning n) {
             n.child.accept(this);
             int m = -99;
-            if (currentStructType != "")
-                if (StructDic[currentStructType].Exists(x => x.Item1 == n.id))
-                    m = StructDic[currentStructType].Find(x => x.Item1 == n.id).Item2;
+            SymReferencing current = n.id as SymReferencing;
+            if (currentStructType != "") 
+                if (StructDic[currentStructType].Exists(x => x.Item1 == current.id))
+                    m = StructDic[currentStructType].Find(x => x.Item1 == current.id).Item2;
                 else error($"{n.id} doesn't exist in {currentStructType}");
-            else m = AST.SymbolTable[GetKeyVal(n.id)];
+            else if (n.id is DotReferencing) {
+                n.id.accept(this);
+                m = n.id.type;
+            } else {
+                m = AST.SymbolTable[GetKeyVal(current.id)];
+            }
             int t = generalize(n.child.type, m);
             n.child = convert(n.child, m);
             n.type = t;
             if (n.child is StructDcel) {
                 StructDcel assStructDcel = n.child as StructDcel;
-                StructDic.Add(n.id, StructDic[assStructDcel.structType]);
+                SymReferencing strucid = assStructDcel.structId as SymReferencing;
+                SymReferencing structype = assStructDcel.structType as SymReferencing;
+                StructDic.Add(strucid.id, StructDic[structype.id]);
             }
         }
 
@@ -337,7 +348,7 @@ namespace ALELA_Compiler.Visitors {
 
         private void Functioncheck() {
             foreach (FuncDecl item in funcs) {
-                var func = funcCalls.FindAll(x => x.id == item.declaring.id);
+                var func = funcCalls.FindAll(x => FindId(x.id) == item.declaring.id);
                 int parameterAmunt = item.declarings.Count;
                 foreach (FunctionStmt stmt in func) {
                     if (parameterAmunt != stmt.param_list.Count) error("too many/few parameters");
@@ -348,6 +359,11 @@ namespace ALELA_Compiler.Visitors {
                     }
                 }
             }
+        }
+
+        private string FindId(AST node) {
+            SymReferencing current = node as SymReferencing;
+            return current.id;
         }
 
         private int GetType(AST node) {

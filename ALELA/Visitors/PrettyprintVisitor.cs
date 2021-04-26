@@ -196,7 +196,8 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            Console.Write($"{n.id}(");
+            n.id.accept(this);
+            Console.Write("(");
             if (n.param_list.Count > 0) {
                 AST first = n.param_list[0];
                 foreach (AST ast in n.param_list) {
@@ -210,7 +211,12 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(Assigning n) {
-            Console.Write($"{n.id} ");
+            if (n.id is SymReferencing) {
+                SymReferencing sym = n.id as SymReferencing;
+                Console.Write($"{sym.id} ");
+            } else if (n.id is DotReferencing) {
+                n.id.accept(this);
+            } else Console.Write($"{n.id} ");
             if (!(n.child is StructDef || n.child is StructDcel)) Console.Write("= ");
             n.child.accept(this);
             Console.WriteLine(";");
