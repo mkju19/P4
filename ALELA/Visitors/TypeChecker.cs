@@ -4,6 +4,7 @@ using System.Text;
 
 namespace ALELA_Compiler.Visitors {
     class TypeChecker : Visitor {
+        // TODO inplemaent functions like Structs
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
         private List<FuncDecl> funcs = new List<FuncDecl>();
@@ -199,7 +200,7 @@ namespace ALELA_Compiler.Visitors {
                 if (StructDic[currentStructType].Exists(x => x.Item1 == current.id))
                     m = StructDic[currentStructType].Find(x => x.Item1 == current.id).Item2;
                 else error($"{n.id} doesn't exist in {currentStructType}");
-            else if (n.id is DotReferencing) {
+            else if (n.id is DotReferencing || n.id is ListReferencing) {
                 n.id.accept(this);
                 m = n.id.type;
             } else {
@@ -220,7 +221,7 @@ namespace ALELA_Compiler.Visitors {
             n.type = AST.SymbolTable[GetKeyVal(n.id)];
         }
 
-        public override void Visit(DotReferencing n) {
+        public override void Visit(DotReferencing n) { //TODO add support for structs in structs
             n.id.accept(this);
             if (n.id.type != AST.STRUCT) error($"{n.id.id} is not of type struct");
             if (n.dotId is SymReferencing) {
@@ -235,6 +236,21 @@ namespace ALELA_Compiler.Visitors {
                 n.dotId.accept(this);
             }
             n.type = n.dotId.type;
+        }
+
+        public override void Visit(ListReferencing n) {
+            n.id.accept(this);
+            int inum = 0;
+            string type = n.id.type.ToString();
+            SymReferencing sym = n.id as SymReferencing;
+            if (type.Length < n.index.Count) error($"too many index dereferences in {sym.id}");
+            foreach (AST item in n.index) {
+                item.accept(this);
+                if (item.type != AST.INTTYPE) error($"{sym.id}'s {inum} index is not of type int");
+                inum++;
+                type = type.Remove(0, 1);
+            }
+            n.type = int.Parse(type);
         }
 
         public override void Visit(BooleanConst n) {

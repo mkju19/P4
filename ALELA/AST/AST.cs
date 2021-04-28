@@ -229,6 +229,13 @@ namespace ALELA_Compiler {
 
     }
 
+    public class ListReferencing : AST {
+        public AST id;
+        public List<AST> index;
+        public ListReferencing(AST Id, List<AST> Index) { id = Id; index = Index; }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
     public class BooleanConst : AST {
         public string val;
         public BooleanConst(string v) { val = v; }

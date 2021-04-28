@@ -35,7 +35,6 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
-            minusScope();
         }
 
         public override void Visit(ProgLoop n) {
@@ -206,7 +205,7 @@ namespace ALELA_Compiler.Visitors {
                     StructDic[id.id].Remove(tuple);
                     StructDic[id.id].Add(new Tuple<string, int>(tuple.Item1, 1));
                 } else error($"{dotid.id} doesn't exist in {id.id}");
-            } else InitiationTable[GetKey(current.id)] = 1;
+            } else if (!(n.id is ListReferencing)) InitiationTable[GetKey(current.id)] = 1;
             n.child.accept(this);
         }
 
@@ -214,7 +213,7 @@ namespace ALELA_Compiler.Visitors {
             if (!KeyValInit(n.id)) error($"{n.id} at {GetKey(n.id).Item1} is not initiated with a value");
         }
 
-        public override void Visit(DotReferencing n) {
+        public override void Visit(DotReferencing n) { //TODO add support for structs in structs
             if (n.dotId is SymReferencing) {
                 SymReferencing sym = n.dotId as SymReferencing;
                 if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
@@ -226,6 +225,13 @@ namespace ALELA_Compiler.Visitors {
                 if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
                     error($"{dot.id.id} doesn't exist in {n.id.id}");
                 n.dotId.accept(this);
+            }
+        }
+
+        public override void Visit(ListReferencing n) {
+            n.id.accept(this);
+            foreach (AST item in n.index) {
+                item.accept(this);
             }
         }
 
@@ -310,17 +316,19 @@ namespace ALELA_Compiler.Visitors {
             return false;
         }
 
-        public void UnusedVariables() {
+        public string UnusedVariables() {
+            string unused = "";
             foreach (KeyValuePair<Tuple<string, string>, int> keyValues in InitiationTable) {
                 if (keyValues.Value != 0) continue;
-                Console.WriteLine($"Variable {keyValues.Key.Item2} at {keyValues.Key.Item1} is not used");
+                unused += $"Variable {keyValues.Key.Item2} at {keyValues.Key.Item1} is not used / initiated\n";
             }
             foreach (KeyValuePair<string, List<Tuple<string, int>>> structvaluePair in StructDic) {
                 foreach (Tuple<string, int> item in structvaluePair.Value) {
                     if (item.Item2 != 0) continue;
-                    Console.WriteLine($"Variable {structvaluePair.Key}.{item.Item1} is not used");
+                    unused += $"Variable {structvaluePair.Key}.{item.Item1} is not used / initiated\n";
                 }
             }
+            return unused;
         }
 
         private string GetLastID(AST node) {

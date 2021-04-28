@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using CommandLine;
 
 namespace ALELA_Compiler {
     class Program {
         static void Main(string[] args) {
+            //TODO finis args handler an file output
+            //var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
             ArgsHandler argsHandler = new ArgsHandler(args);
             string file = argsHandler.InFile;
             //string file = "./prog.txt";
@@ -11,26 +14,49 @@ namespace ALELA_Compiler {
             Parser parser = new Parser(scanner);
             parser.Parse();
             Console.WriteLine($" {parser.errors.count} errors detected\n");
-            parser.ProgramAST.accept(new Visitors.PrettyprintVisitor());
-            Console.WriteLine("  Pretty Printing successful\n");
-            parser.ProgramAST.accept(new Visitors.SymbolTableFilling());
 
-            string dictionaryString = "{";
-            foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
-                dictionaryString += keyValues.Key + " : " + keyValues.Value + ", ";
+            if (parser.errors.count == 0) {
+                try {
+                    Visitors.PrettyprintVisitor prettyprint = new Visitors.PrettyprintVisitor();
+                    if (argsHandler.verbose == true) {
+                        parser.ProgramAST.accept(prettyprint);
+                        Console.WriteLine(prettyprint.Code);
+                        Console.WriteLine("  Pretty Printing successful\n");
+                    }
+
+                    Visitors.SymbolTableFilling symbolTable = new Visitors.SymbolTableFilling();
+                    parser.ProgramAST.accept(symbolTable);
+                    Console.WriteLine("  Symbol Table filling successful");
+
+                    Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
+                    parser.ProgramAST.accept(typeChecker);
+                    Console.WriteLine("  Type Checking successful");
+
+                    Visitors.InitiationChecker initiationChecker = new Visitors.InitiationChecker(typeChecker.StructDic);
+                    parser.ProgramAST.accept(initiationChecker);
+                    Console.WriteLine("  Initiation Checking successful\n");
+
+                    if (argsHandler.verbose == true) {
+                        prettyprint.Code = "";
+                        parser.ProgramAST.accept(prettyprint);
+                        Console.WriteLine(prettyprint.Code);
+                        Console.WriteLine("  Pretty Printing successful\n");
+                    }
+
+                    if (argsHandler.arduinoCode == true) {
+                        Visitors.CppArduinoCodeGenerator cppArduinoCodeGenerator = new Visitors.CppArduinoCodeGenerator();
+                        parser.ProgramAST.accept(cppArduinoCodeGenerator);
+                        Console.WriteLine(cppArduinoCodeGenerator.Code);
+                        Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
+                    }
+
+                    Console.WriteLine(initiationChecker.UnusedVariables());
+
+                } catch (Exception e) {
+                    Console.WriteLine(e.Message);
+                }
+
             }
-            Console.WriteLine(dictionaryString.TrimEnd(',', ' ') + "}");
-
-            Console.WriteLine("  Symbol Table filling successful\n");
-            Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
-            parser.ProgramAST.accept(typeChecker);
-            Console.WriteLine("  Type Checking successful\n");
-            parser.ProgramAST.accept(new Visitors.InitiationChecker(typeChecker.StructDic));
-            Console.WriteLine("  Initiation Checking successful\n");
-            parser.ProgramAST.accept(new Visitors.PrettyprintVisitor());
-            Console.WriteLine("  Pretty Printing successful\n");
-            parser.ProgramAST.accept(new Visitors.CppArduinoCodeGenerator());
-            Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
         }
     }
 }

@@ -13,7 +13,7 @@ public class Parser {
 	public const int _id = 3;
 	public const int _stringtext = 4;
 	public const int _newline = 5;
-	public const int maxT = 45;
+	public const int maxT = 47;
 
 	const bool _T = true;
 	const bool _x = false;
@@ -176,7 +176,7 @@ public Prog ProgramAST;
 		} else if (la.kind == 8) {
 			Get();
 			STRUCTDEF(out e, idval);
-		} else SynErr(46);
+		} else SynErr(48);
 		e = new Assigning(idval, e); 
 	}
 
@@ -200,51 +200,51 @@ public Prog ProgramAST;
 	void TYPE(out SymDeclaring e) {
 		e = null; SymDeclaring lt = null; 
 		switch (la.kind) {
-		case 38: {
+		case 40: {
 			Get();
 			e = new VoidDcl(); 
 			break;
 		}
-		case 39: {
+		case 41: {
 			Get();
 			e = new IntDcl(); 
 			break;
 		}
-		case 40: {
+		case 42: {
 			Get();
 			e = new FloatDcl(); 
 			break;
 		}
-		case 41: {
+		case 43: {
 			Get();
 			e = new StringDcl(); 
 			break;
 		}
-		case 42: {
+		case 44: {
 			Get();
 			e = new BooleanDcl(); 
 			break;
 		}
-		case 43: {
+		case 45: {
 			Get();
 			e = new StructDcl(); 
 			break;
 		}
-		case 44: {
+		case 46: {
 			Get();
-			Expect(31);
+			Expect(33);
 			TYPE(out lt);
-			Expect(29);
+			Expect(31);
 			e = new ListDcl(lt); 
 			break;
 		}
-		default: SynErr(47); break;
+		default: SynErr(49); break;
 		}
 	}
 
 	void EXPR(out AST e) {
 		multExpr(out e);
-		if (la.kind == 33 || la.kind == 34) {
+		if (la.kind == 35 || la.kind == 36) {
 			addExpr(e, out e);
 		}
 	}
@@ -269,7 +269,7 @@ public Prog ProgramAST;
 			eo = e; 
 		} else if (la.kind == 15) {
 			FUNCDECL(out eo, e);
-		} else SynErr(48);
+		} else SynErr(50);
 	}
 
 	void STMT(out AST e) {
@@ -300,7 +300,7 @@ public Prog ProgramAST;
 				Get();
 				n1 = new SymReferencing(t.val); 
 				Expect(9);
-			} else SynErr(49);
+			} else SynErr(51);
 			LOGI_EXPR(out logi);
 			Expect(9);
 			Expect(3);
@@ -341,16 +341,16 @@ public Prog ProgramAST;
 			break;
 		}
 		case 3: {
-			IDENTIFIER(out e, out id);
+			IDENTIFIER(out e);
 			CALL(e, out e);
 			Expect(9);
 			break;
 		}
-		case 38: case 39: case 40: case 41: case 42: case 43: case 44: {
+		case 40: case 41: case 42: case 43: case 44: case 45: case 46: {
 			DECL(out e);
 			break;
 		}
-		default: SynErr(50); break;
+		default: SynErr(52); break;
 		}
 	}
 
@@ -368,26 +368,45 @@ public Prog ProgramAST;
 			} else if (la.kind == 13) {
 				Get();
 				IFELSTMT(out els);
-			} else SynErr(51);
+			} else SynErr(53);
 		}
 		e = new IfStmt(logi, stm, els); 
 	}
 
 	void LOGI_EXPR(out AST e) {
 		LOGI_AND(out e);
-		if (la.kind == 24) {
+		if (la.kind == 26) {
 			LOGI_OR(e, out e);
 		}
 	}
 
-	void IDENTIFIER(out AST e, out string id) {
+	void IDENTIFIER(out AST e) {
 		e = null; List<AST> elist = new List<AST>(); AST ei = null; 
 		Expect(3);
-		id = t.val; e = new SymReferencing(id); 
-		if (la.kind == 23) {
-			Get();
-			IDENTIFIER(out ei, out id);
-			e = new DotReferencing(e, ei); 
+		string id = t.val; e = new SymReferencing(id); 
+		if (la.kind == 23 || la.kind == 24) {
+			if (la.kind == 23) {
+				Get();
+				IDENTIFIER(out ei);
+				e = new DotReferencing(e, ei); 
+			} else {
+				Get();
+				EXPR(out ei);
+				Expect(25);
+				elist.Add(ei); 
+				while (la.kind == 24) {
+					Get();
+					EXPR(out ei);
+					Expect(25);
+					elist.Add(ei); 
+				}
+				e = new ListReferencing(e, elist); 
+				if (la.kind == 23) {
+					Get();
+					IDENTIFIER(out ei);
+					e = new DotReferencing(e, ei); 
+				}
+			}
 		}
 	}
 
@@ -398,7 +417,7 @@ public Prog ProgramAST;
 			e = new FunctionStmt(id, stm); 
 		} else if (la.kind == 8 || la.kind == 10) {
 			ASSIG(out e, id);
-		} else SynErr(52);
+		} else SynErr(54);
 	}
 
 	void FUNC(out List<AST> eo) {
@@ -418,7 +437,7 @@ public Prog ProgramAST;
 	}
 
 	void VALUE(out AST e) {
-		e = null; List<AST> elist = new List<AST>(); string id; 
+		e = null; List<AST> elist = new List<AST>(); 
 		if (la.kind == 1) {
 			Get();
 			e = new IntConst(t.val); 
@@ -431,12 +450,12 @@ public Prog ProgramAST;
 		} else if (la.kind == 8) {
 			LISTCONST(out e);
 		} else if (la.kind == 3) {
-			IDENTIFIER(out e, out id);
+			IDENTIFIER(out e);
 			if (la.kind == 15) {
 				FUNC(out elist);
 				e = new FunctionStmt(e, elist); 
 			}
-		} else SynErr(53);
+		} else SynErr(55);
 	}
 
 	void LISTCONST(out AST eo) {
@@ -455,14 +474,14 @@ public Prog ProgramAST;
 
 	void LOGI_AND(out AST e) {
 		LOGI_EQUAL(out e);
-		if (la.kind == 25) {
+		if (la.kind == 27) {
 			LOGI_ANDOp(e, out e);
 		}
 	}
 
 	void LOGI_OR(AST e, out AST eo) {
 		string op; AST e2; 
-		Expect(24);
+		Expect(26);
 		op = t.val; 
 		LOGI_EXPR(out e2);
 		eo = new Expression(op, e, e2); 
@@ -470,14 +489,14 @@ public Prog ProgramAST;
 
 	void LOGI_EQUAL(out AST e) {
 		LOGI_LG(out e);
-		if (la.kind == 26 || la.kind == 27) {
+		if (la.kind == 28 || la.kind == 29) {
 			LOGI_EQUALOp(e, out e);
 		}
 	}
 
 	void LOGI_ANDOp(AST e, out AST eo) {
 		string op; AST e2; 
-		Expect(25);
+		Expect(27);
 		op = t.val; 
 		LOGI_EQUAL(out e2);
 		eo = new Expression(op, e, e2); 
@@ -492,11 +511,11 @@ public Prog ProgramAST;
 
 	void LOGI_EQUALOp(AST e, out AST eo) {
 		string op; AST e2; 
-		if (la.kind == 26) {
+		if (la.kind == 28) {
 			Get();
-		} else if (la.kind == 27) {
+		} else if (la.kind == 29) {
 			Get();
-		} else SynErr(54);
+		} else SynErr(56);
 		op = t.val; 
 		LOGI_LG(out e2);
 		eo = new Expression(op, e, e2); 
@@ -504,26 +523,26 @@ public Prog ProgramAST;
 
 	void LOGI_NOT(out AST e) {
 		AST e2; e = null; 
-		if (la.kind == 32) {
+		if (la.kind == 34) {
 			Get();
 			LOGI_NOT(out e2);
 			e = new NotExpression(e2); 
 		} else if (StartOf(3)) {
 			LOGI_TERM(out e);
-		} else SynErr(55);
+		} else SynErr(57);
 	}
 
 	void LOGI_LGOp(AST e, out AST eo) {
 		string op; AST e2; 
-		if (la.kind == 28) {
-			Get();
-		} else if (la.kind == 29) {
-			Get();
-		} else if (la.kind == 30) {
+		if (la.kind == 30) {
 			Get();
 		} else if (la.kind == 31) {
 			Get();
-		} else SynErr(56);
+		} else if (la.kind == 32) {
+			Get();
+		} else if (la.kind == 33) {
+			Get();
+		} else SynErr(58);
 		op = t.val; 
 		LOGI_NOT(out e2);
 		eo = new Expression(op, e, e2); 
@@ -537,23 +556,23 @@ public Prog ProgramAST;
 			Get();
 			LOGI_EXPR(out e);
 			Expect(16);
-		} else SynErr(57);
+		} else SynErr(59);
 	}
 
 	void multExpr(out AST e) {
 		terminalExpr(out e);
-		if (la.kind == 35 || la.kind == 36 || la.kind == 37) {
+		if (la.kind == 37 || la.kind == 38 || la.kind == 39) {
 			multExprOp(e, out e);
 		}
 	}
 
 	void addExpr(AST e, out AST eo) {
 		string op; AST e2; 
-		if (la.kind == 33) {
+		if (la.kind == 35) {
 			Get();
-		} else if (la.kind == 34) {
+		} else if (la.kind == 36) {
 			Get();
-		} else SynErr(58);
+		} else SynErr(60);
 		op = t.val; 
 		EXPR(out e2);
 		eo = new Expression(op, e, e2); 
@@ -567,18 +586,18 @@ public Prog ProgramAST;
 			Get();
 			EXPR(out e);
 			Expect(16);
-		} else SynErr(59);
+		} else SynErr(61);
 	}
 
 	void multExprOp(AST e, out AST eo) {
 		string op; AST e2; 
-		if (la.kind == 35) {
+		if (la.kind == 37) {
 			Get();
-		} else if (la.kind == 36) {
+		} else if (la.kind == 38) {
 			Get();
-		} else if (la.kind == 37) {
+		} else if (la.kind == 39) {
 			Get();
-		} else SynErr(60);
+		} else SynErr(62);
 		op = t.val; 
 		multExpr(out e2);
 		eo = new Expression(op, e, e2); 
@@ -596,12 +615,12 @@ public Prog ProgramAST;
 	}
 	
 	static readonly bool[,] set = {
-		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_T,_T,_T, _T,_x,_x},
-		{_x,_x,_x,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_x, _x,_T,_T,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_T,_T,_T, _T,_x,_x},
-		{_x,_T,_T,_T, _T,_x,_x,_x, _T,_x,_x,_x, _x,_x,_x,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
-		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x},
-		{_x,_T,_T,_T, _T,_x,_x,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x}
+		{_T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_T,_T,_x, _x},
+		{_x,_x,_x,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_T,_T,_x, _x,_T,_T,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _T,_T,_T,_T, _T,_T,_T,_x, _x},
+		{_x,_T,_T,_T, _T,_x,_x,_x, _T,_x,_x,_x, _x,_x,_x,_T, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x},
+		{_x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_T,_T, _T,_T,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x},
+		{_x,_T,_T,_T, _T,_x,_x,_x, _T,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x,_x,_x,_x, _x}
 
 	};
 } // end Parser
@@ -639,43 +658,45 @@ public class Errors {
 			case 21: s = "\"default\" expected"; break;
 			case 22: s = "\"else\" expected"; break;
 			case 23: s = "\".\" expected"; break;
-			case 24: s = "\"||\" expected"; break;
-			case 25: s = "\"&\" expected"; break;
-			case 26: s = "\"==\" expected"; break;
-			case 27: s = "\"!=\" expected"; break;
-			case 28: s = "\">=\" expected"; break;
-			case 29: s = "\">\" expected"; break;
-			case 30: s = "\"<=\" expected"; break;
-			case 31: s = "\"<\" expected"; break;
-			case 32: s = "\"!\" expected"; break;
-			case 33: s = "\"+\" expected"; break;
-			case 34: s = "\"-\" expected"; break;
-			case 35: s = "\"*\" expected"; break;
-			case 36: s = "\"/\" expected"; break;
-			case 37: s = "\"%\" expected"; break;
-			case 38: s = "\"void\" expected"; break;
-			case 39: s = "\"int\" expected"; break;
-			case 40: s = "\"float\" expected"; break;
-			case 41: s = "\"string\" expected"; break;
-			case 42: s = "\"boolean\" expected"; break;
-			case 43: s = "\"struct\" expected"; break;
-			case 44: s = "\"List\" expected"; break;
-			case 45: s = "??? expected"; break;
-			case 46: s = "invalid ASSIG"; break;
-			case 47: s = "invalid TYPE"; break;
-			case 48: s = "invalid STRUCTFIELD"; break;
-			case 49: s = "invalid STMT"; break;
-			case 50: s = "invalid STMT"; break;
-			case 51: s = "invalid IFELSTMT"; break;
-			case 52: s = "invalid CALL"; break;
-			case 53: s = "invalid VALUE"; break;
-			case 54: s = "invalid LOGI_EQUALOp"; break;
-			case 55: s = "invalid LOGI_NOT"; break;
-			case 56: s = "invalid LOGI_LGOp"; break;
-			case 57: s = "invalid LOGI_TERM"; break;
-			case 58: s = "invalid addExpr"; break;
-			case 59: s = "invalid terminalExpr"; break;
-			case 60: s = "invalid multExprOp"; break;
+			case 24: s = "\"[\" expected"; break;
+			case 25: s = "\"]\" expected"; break;
+			case 26: s = "\"||\" expected"; break;
+			case 27: s = "\"&\" expected"; break;
+			case 28: s = "\"==\" expected"; break;
+			case 29: s = "\"!=\" expected"; break;
+			case 30: s = "\">=\" expected"; break;
+			case 31: s = "\">\" expected"; break;
+			case 32: s = "\"<=\" expected"; break;
+			case 33: s = "\"<\" expected"; break;
+			case 34: s = "\"!\" expected"; break;
+			case 35: s = "\"+\" expected"; break;
+			case 36: s = "\"-\" expected"; break;
+			case 37: s = "\"*\" expected"; break;
+			case 38: s = "\"/\" expected"; break;
+			case 39: s = "\"%\" expected"; break;
+			case 40: s = "\"void\" expected"; break;
+			case 41: s = "\"int\" expected"; break;
+			case 42: s = "\"float\" expected"; break;
+			case 43: s = "\"string\" expected"; break;
+			case 44: s = "\"boolean\" expected"; break;
+			case 45: s = "\"struct\" expected"; break;
+			case 46: s = "\"List\" expected"; break;
+			case 47: s = "??? expected"; break;
+			case 48: s = "invalid ASSIG"; break;
+			case 49: s = "invalid TYPE"; break;
+			case 50: s = "invalid STRUCTFIELD"; break;
+			case 51: s = "invalid STMT"; break;
+			case 52: s = "invalid STMT"; break;
+			case 53: s = "invalid IFELSTMT"; break;
+			case 54: s = "invalid CALL"; break;
+			case 55: s = "invalid VALUE"; break;
+			case 56: s = "invalid LOGI_EQUALOp"; break;
+			case 57: s = "invalid LOGI_NOT"; break;
+			case 58: s = "invalid LOGI_LGOp"; break;
+			case 59: s = "invalid LOGI_TERM"; break;
+			case 60: s = "invalid addExpr"; break;
+			case 61: s = "invalid terminalExpr"; break;
+			case 62: s = "invalid multExprOp"; break;
 
 			default: s = "error " + n; break;
 		}

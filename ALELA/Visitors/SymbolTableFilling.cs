@@ -63,7 +63,7 @@ namespace ALELA_Compiler.Visitors {
             else error("variable " + n.id + " is already declared");
         }
 
-        public override void Visit(ListDcl n) { // TODO
+        public override void Visit(ListDcl n) {
             string type = AST.LIST.ToString();
             type += n.listType is ListDcl ? ListType(n.listType as ListDcl) : ListType(n.listType);
             if (!KeyValExists(n.id)) AST.SymbolTable.Add(GetKeyVal(n.id), int.Parse(type));
@@ -191,6 +191,10 @@ namespace ALELA_Compiler.Visitors {
             //throw new NotImplementedException();
         }
 
+        public override void Visit(ListReferencing n) {
+            //throw new NotImplementedException();
+        }
+
         public override void Visit(BooleanConst n) {
             //throw new NotImplementedException();
         }
@@ -281,6 +285,14 @@ namespace ALELA_Compiler.Visitors {
             } else {
                 return "";
             }
+        }
+
+        public string PrintSymbolTable() {
+            string dictionaryString = "{";
+            foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
+                dictionaryString += keyValues.Key + " : " + keyValues.Value + ", ";
+            }
+            return dictionaryString.TrimEnd(',', ' ') + "}";
         }
     }
 }

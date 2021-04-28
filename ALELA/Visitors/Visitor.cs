@@ -34,6 +34,7 @@ namespace ALELA_Compiler {
 		public abstract void Visit(Assigning n);
 		public abstract void Visit(SymReferencing n);
 		public abstract void Visit(DotReferencing n);
+		public abstract void Visit(ListReferencing n);
 		public abstract void Visit(BooleanConst n);
 		public abstract void Visit(IntConst n);
 		public abstract void Visit(FloatConst n);

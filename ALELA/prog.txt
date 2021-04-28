@@ -7,7 +7,7 @@ int FALSE = 0;
 boolean qq;
 string text = "th8is a 2 test !";
 List<List<string>> testList = {{text}, {"list"}, {"thing"}};
-
+string testlisty = testList[1 - 1][OFF];
 /*-------------------------------------------------------------*/
 
 struct pin {
@@ -28,6 +28,11 @@ struct pin led{pinNum = 13, pinMode = 1};
 int ledPin = led.pinNum;
 
 setup {
+	testList[0][0] = testlisty;
+	List<string> ww = testList[0];
+	testList[0] = ww;
+	testList[0] = {"test", "work?"};
+
 	led.pinPower = 100;
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
 	boolean y = 1;

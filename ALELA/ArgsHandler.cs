@@ -2,11 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using CommandLine;
 
 namespace ALELA_Compiler {
+
     class ArgsHandler {
+        // TODO extende args handler
         public string[] Args;
         public string InFile, OutFile = "a.bin";
+        public bool verbose = false;
+        public bool arduinoCode = true;
         public ArgsHandler(string[] args) {
             Args = args;
             if (Args.Length == 0) {
@@ -54,6 +59,29 @@ namespace ALELA_Compiler {
             Console.WriteLine("Help:\nInput parameters: (inputFileName) [-o (OutputfileName)]");
             Environment.Exit(1);
         }
+    }
+
+    class Options : ParserSettings {
+        public Options() {
+            AutoHelp = true;
+        }
+
+        [Value(0)]
+        public string InputFile { get; set; }
+
+        [Option('o', Required = false,
+          HelpText = "Output file name.")]
+        public string OutputFile { get; set; }
+
+        [Option('v', "verbose", Required = false,
+          HelpText = "Prints all messages to standard output.")]
+        public bool Verbose { get; set; }
+
+        [Option('a', "arduino", Required = false,
+          HelpText = "Outputs a arduino code file.")]
+        public bool arduino { get; set; }
+
+
     }
 
 }

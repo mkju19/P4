@@ -4,16 +4,17 @@ using System.Text;
 
 namespace ALELA_Compiler.Visitors {
     class CppArduinoCodeGenerator : Visitor {
-        private string Code = "-------------------------------------------\n";
+        // TODO fix Lists (List not working)
+
+        public string Code = "-------------------------------------------\n";
         public void emit(string c) {
-            Code = Code + c;
+            Code += c;
         }
         public override void Visit(Prog n) {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
             emit("-------------------------------------------\n");
-            Console.WriteLine(Code);
         }
 
         public override void Visit(ProgSetup n) {
@@ -49,7 +50,7 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(StringDcl n) {
-            emit($"string {n.id} ");
+            emit($"String {n.id} ");
         }
 
         public override void Visit(BooleanDcl n) {
@@ -61,16 +62,32 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(ListDcl n) {
-            emit($"List<");
-            n.listType.accept(this); // TODO change?
-            emit($"> {n.id} ");
+            int depth = 0;
+            AST sT = n;
+            while (sT is ListDcl) {
+                depth++;
+                ListDcl listDcl = sT as ListDcl;
+                sT = listDcl.listType;
+            }
+            sT.accept(this);
+            emit($"{n.id}");
+            for (int i = 0; i < depth; i++) {
+                emit("[]");
+            }
         }
 
         public override void Visit(Decl n) {
             if (n.assigning != null && !(n.declaring is VoidDcl)) {
                 n.declaring.accept(this);
-                Code = Code.Remove((Code.Length - n.declaring.id.Length) - 1);
-                n.assigning.accept(this);
+                if (n.declaring is ListDcl) {
+                    emit(" = ");
+                    Assigning assigning = n.assigning as Assigning;
+                    assigning.child.accept(this);
+                    emit(";\n");
+                } else {
+                    Code = Code.Remove((Code.Length - n.declaring.id.Length) - 1);
+                    n.assigning.accept(this);
+                }
             } else if (!(n.declaring is VoidDcl)) {
                 n.declaring.accept(this);
                 emit(";\n");
@@ -97,6 +114,11 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(StructDcel n) {
+            SymReferencing sym = n.structType as SymReferencing;
+            Code = Code.Remove(Code.Length - $"struct {sym.id} = ".Length);
+            n.structType.accept(this);
+            emit(" ");
+            n.structId.accept(this);
             emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
@@ -104,8 +126,9 @@ namespace ALELA_Compiler.Visitors {
                     if (first != ast) {
                         emit(", ");
                     }
-                    ast.accept(this);
-                    Code = Code.Remove(Code.Length - 2);
+                    Assigning assigning = ast as Assigning;
+                    assigning.child.accept(this);
+                    //Code = Code.Remove(Code.Length - 2);
                 }
             }
             emit("}");
@@ -218,12 +241,14 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(Assigning n) {
-            if (n.id is SymReferencing) {
+            /*if (n.id is SymReferencing) {
                 SymReferencing sym = n.id as SymReferencing;
                 emit($"{sym.id} ");
             } else if (n.id is DotReferencing) {
                 n.id.accept(this);
-            } else emit($"{n.id} = ");
+            } else emit($"{n.id} = ");*/
+            n.id.accept(this);
+            if (!(n.child is StructDef)) emit($" = ");
             n.child.accept(this);
             emit(";\n");
         }
@@ -233,7 +258,18 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(DotReferencing n) {
-            //throw new NotImplementedException();
+            n.id.accept(this);
+            emit($".");
+            n.dotId.accept(this);
+        }
+
+        public override void Visit(ListReferencing n) {
+            n.id.accept(this);
+            foreach (AST item in n.index) {
+                emit("[");
+                item.accept(this);
+                emit("]");
+            }
         }
 
         public override void Visit(BooleanConst n) {
