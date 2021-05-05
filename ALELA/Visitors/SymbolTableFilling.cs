@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ALELA_Compiler.Visitors {
-    class SymbolTableFilling : Visitor {
+    public class SymbolTableFilling : Visitor {
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
         
@@ -92,6 +92,7 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
+            if (n.returnValue != null) n.returnValue.accept(this);
             minusScope();
         }
 
@@ -220,6 +221,11 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(Expression n) {
             n.childe1.accept(this);
             n.childe2.accept(this);
+        }
+
+        public override void Visit(LogiExpression n) {
+            n.childe1.accept(this);
+            n.childe2?.accept(this);
         }
 
         public override void Visit(NotExpression n) {

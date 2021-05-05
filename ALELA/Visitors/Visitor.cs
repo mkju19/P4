@@ -41,6 +41,7 @@ namespace ALELA_Compiler {
 		public abstract void Visit(StringConst n);
 		public abstract void Visit(ListConst n);
 		public abstract void Visit(Expression n);
+		public abstract void Visit(LogiExpression n);
 		public abstract void Visit(NotExpression n);
 		public abstract void Visit(ConvertingToFloat n);
 		public abstract void Visit(ConvertingToBool n);

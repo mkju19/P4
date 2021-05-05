@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ALELA_Compiler.Visitors {
-    class TypeChecker : Visitor {
+    public class TypeChecker : Visitor {
         // TODO inplemaent functions like Structs
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
@@ -16,23 +16,23 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
-            Functioncheck();
+            FunctionCheck();
         }
 
         public override void Visit(ProgSetup n) {
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(ProgLoop n) {
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(SymDeclaring n) {
@@ -75,14 +75,22 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(FuncDecl n) {
             n.declaring.accept(this);
-            plusScope();
+            PlusScope();
             foreach (SymDeclaring ast in n.declarings) {
                 ast.accept(this);
             }
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
-            minusScope();
+            if (n.returnValue == null && n.declaring.type != AST.VOID) {
+                Error($"function {n.declaring.id} must use \"return\"");
+            } else if (n.returnValue != null && n.declaring.type == AST.VOID) {
+                Error($"function {n.declaring.id} must not use \"return\"");
+            } else if (n.returnValue != null) {
+                n.returnValue.accept(this);
+                if (n.declaring.type != n.returnValue.type) Error($"return must be of type {n.declaring.type}");
+            }
+            MinusScope();
             funcs.Add(n);
         }
 
@@ -102,7 +110,7 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(StructDef n) {
             n.type = AST.STRUCT;
             List<Tuple<string, int>> tuples = new List<Tuple<string, int>>();
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
                 if (ast is SymDeclaring) {
@@ -114,7 +122,7 @@ namespace ALELA_Compiler.Visitors {
                     tuples.Add(new Tuple<string, int>(symDeclaring.id, GetType(funcDecl.declaring)));
                 }
             }
-            minusScope();
+            MinusScope();
             SymReferencing current = n.structType as SymReferencing;
             StructDic.Add(current.id, tuples);
         }
@@ -125,40 +133,40 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(IfStmt n) {
             n.logi_expr.accept(this);
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
             n.elseIF_Eles?.accept(this);
         }
 
         public override void Visit(ElseStmt n) {
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(WhileStmt n) {
             n.logi_expr.accept(this);
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(ForStmt n) {
-            plusScope();
+            PlusScope();
             n.stm1.accept(this);
             n.stm2.accept(this);
             n.stm3.accept(this);
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(SwitchStmt n) {
@@ -168,19 +176,19 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(SwitchCase n) {
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(SwitchDefault n) {
-            plusScope();
+            PlusScope();
             foreach (AST ast in n.stmt_list) {
                 ast.accept(this);
             }
-            minusScope();
+            MinusScope();
         }
 
         public override void Visit(FunctionStmt n) {
@@ -199,15 +207,15 @@ namespace ALELA_Compiler.Visitors {
             if (currentStructType != "") 
                 if (StructDic[currentStructType].Exists(x => x.Item1 == current.id))
                     m = StructDic[currentStructType].Find(x => x.Item1 == current.id).Item2;
-                else error($"{n.id} doesn't exist in {currentStructType}");
+                else Error($"{n.id} doesn't exist in {currentStructType}");
             else if (n.id is DotReferencing || n.id is ListReferencing) {
                 n.id.accept(this);
                 m = n.id.type;
             } else {
                 m = AST.SymbolTable[GetKeyVal(current.id)];
             }
-            int t = generalize(n.child.type, m);
-            n.child = convert(n.child, m);
+            int t = Generalize(n.child.type, m);
+            n.child = Convert(n.child, m);
             n.type = t;
             if (n.child is StructDcel) {
                 StructDcel assStructDcel = n.child as StructDcel;
@@ -223,16 +231,16 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(DotReferencing n) { //TODO add support for structs in structs
             n.id.accept(this);
-            if (n.id.type != AST.STRUCT) error($"{n.id.id} is not of type struct");
+            if (n.id.type != AST.STRUCT) Error($"{n.id.id} is not of type struct");
             if (n.dotId is SymReferencing) {
                 SymReferencing sym = n.dotId as SymReferencing;
                 if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
-                    error($"{sym.id} doesn't exist in {n.id.id}");
+                    Error($"{sym.id} doesn't exist in {n.id.id}");
                 n.dotId.type = StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2;
             } else if (n.dotId is DotReferencing) {
                 DotReferencing dot = n.dotId as DotReferencing;
                 if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
-                    error($"{dot.id.id} doesn't exist in {n.id.id}");
+                    Error($"{dot.id.id} doesn't exist in {n.id.id}");
                 n.dotId.accept(this);
             }
             n.type = n.dotId.type;
@@ -243,10 +251,10 @@ namespace ALELA_Compiler.Visitors {
             int inum = 0;
             string type = n.id.type.ToString();
             SymReferencing sym = n.id as SymReferencing;
-            if (type.Length < n.index.Count) error($"too many index dereferences in {sym.id}");
+            if (type.Length < n.index.Count) Error($"too many index dereferences in {sym.id}");
             foreach (AST item in n.index) {
                 item.accept(this);
-                if (item.type != AST.INTTYPE) error($"{sym.id}'s {inum} index is not of type int");
+                if (item.type != AST.INTTYPE) Error($"{sym.id}'s {inum} index is not of type int");
                 inum++;
                 type = type.Remove(0, 1);
             }
@@ -275,7 +283,7 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
                 if (elementType == -1) elementType = ast.type;
-                else if (ast.type != elementType) error($"List in {scopeLevel} not of same type");
+                else if (ast.type != elementType) Error($"List in {scopeLevel} not of same type");
             }
             if (elementType != -1) type += elementType.ToString();
             n.type = int.Parse(type);
@@ -284,10 +292,16 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(Expression n) {
             n.childe1.accept(this);
             n.childe2.accept(this);
-            int m = generalize(n.childe1.type, n.childe2.type);
-            n.childe1 = convert(n.childe1, m);
-            n.childe2 = convert(n.childe2, m);
+            int m = Generalize(n.childe1.type, n.childe2.type);
+            n.childe1 = Convert(n.childe1, m);
+            n.childe2 = Convert(n.childe2, m);
             n.type = m;
+        }
+
+        public override void Visit(LogiExpression n) {
+            n.childe1.accept(this);
+            n.childe2?.accept(this);
+            n.type = AST.BOOLEAN;
         }
 
         public override void Visit(NotExpression n) {
@@ -305,7 +319,7 @@ namespace ALELA_Compiler.Visitors {
             n.type = AST.BOOLEAN;
         }
 
-        private int generalize(int t1, int t2) {
+        private int Generalize(int t1, int t2) {
             if (t1 == AST.VOID || t2 == AST.VOID) return AST.VOID;
             else if (t1 == AST.BOOLEAN || t2 == AST.BOOLEAN) return AST.BOOLEAN;
             else if (t1 == AST.STRING || t2 == AST.STRING) return AST.STRING;
@@ -316,33 +330,33 @@ namespace ALELA_Compiler.Visitors {
             else return AST.INTTYPE;
         }
 
-        private AST convert(AST n, int t) {
+        private AST Convert(AST n, int t) {
             /*n = note to convert t = final type*/
-            if (n.type == AST.VOID || t == AST.VOID) error("Illegal VOID conversion");
-            if (n.type != AST.STRING && t == AST.STRING) error("Illegal STRING conversion");
-            if (n.type == AST.STRING && t != AST.STRING) error("Illegal STRING conversion");
-            if (n.type != AST.STRUCT && t == AST.STRUCT) error("Illegal STRUCT conversion");
-            if (n.type == AST.STRUCT && t != AST.STRUCT) error("Illegal STRUCT conversion");
-            if (n.type != AST.LIST && t == AST.LIST) error("Illegal LIST conversion");
-            if (n.type == AST.LIST && t != AST.LIST) error("Illegal LIST conversion");
+            if (n.type == AST.VOID || t == AST.VOID) Error("Illegal VOID conversion");
+            if (n.type != AST.STRING && t == AST.STRING) Error("Illegal STRING conversion");
+            if (n.type == AST.STRING && t != AST.STRING) Error("Illegal STRING conversion");
+            if (n.type != AST.STRUCT && t == AST.STRUCT) Error("Illegal STRUCT conversion");
+            if (n.type == AST.STRUCT && t != AST.STRUCT) Error("Illegal STRUCT conversion");
+            if (n.type != AST.LIST && t == AST.LIST) Error("Illegal LIST conversion");
+            if (n.type == AST.LIST && t != AST.LIST) Error("Illegal LIST conversion");
             if ((n.type.ToString().Length > 1 || t.ToString().Length > 1)
-                && n.type != t) error("Illegal LIST conversion");
-            if (n.type == AST.BOOLEAN && t != AST.BOOLEAN) error("Illegal BOOLEAN conversion");
-            else if (n.type != AST.BOOLEAN && t == AST.BOOLEAN) return new ConvertingToBool(n);
-            if (n.type == AST.FLTTYPE && t == AST.INTTYPE) error("Illegal FLTTYPE conversion");
+                && n.type != t) Error("Illegal LIST conversion");
+            if (n.type == AST.BOOLEAN && t != AST.BOOLEAN) Error("Illegal BOOLEAN conversion");
+            else if (n.type != AST.BOOLEAN && t == AST.BOOLEAN) Error("Illegal BOOLEAN conversion"); //return new ConvertingToBool(n);
+            if (n.type == AST.FLTTYPE && t == AST.INTTYPE) Error("Illegal FLTTYPE conversion");
             else if (n.type == AST.INTTYPE && t == AST.FLTTYPE) return new ConvertingToFloat(n);
             return n;
         }
 
-        private void error(string message) {
+        private void Error(string message) {
             throw new Exception(message);
         }
 
-        private void plusScope() {
+        private void PlusScope() {
             if (scopekey.Count <= scopeLevel++) scopekey.Add(1);
         }
 
-        private void minusScope() {
+        private void MinusScope() {
             if (scopekey.Count >= (--scopeLevel)) scopekey[scopeLevel]++;
             if (scopekey.Count >= (scopeLevel + 2)) scopekey.RemoveAt(scopekey.Count - 1);
         }
@@ -355,22 +369,22 @@ namespace ALELA_Compiler.Visitors {
             }
             Tuple<string, string> tuple = new Tuple<string, string>(val, id);
             while (!AST.SymbolTable.ContainsKey(tuple)) {
-                if (val.Length == 0) error($"{id} dose not existe!");
+                if (val.Length == 0) Error($"{id} dose not existe!");
                 val = val.Substring(0, val.Length - 1);
                 tuple = new Tuple<string, string>(val, id);
             }
             return tuple;
         }
 
-        private void Functioncheck() {
+        private void FunctionCheck() {
             foreach (FuncDecl item in funcs) {
                 var func = funcCalls.FindAll(x => FindId(x.id) == item.declaring.id);
                 int parameterAmunt = item.declarings.Count;
                 foreach (FunctionStmt stmt in func) {
-                    if (parameterAmunt != stmt.param_list.Count) error("too many/few parameters");
+                    if (parameterAmunt != stmt.param_list.Count) Error("too many/few parameters");
                     else {
                         for (int i = 0; i < parameterAmunt; i++) {
-                            if (item.declarings[i].type != stmt.param_list[i].type) error($"parameter {i} in {stmt.id} is of wrong type");
+                            if (item.declarings[i].type != stmt.param_list[i].type) Error($"parameter {i} in {stmt.id} is of wrong type");
                         }
                     }
                 }
@@ -398,7 +412,7 @@ namespace ALELA_Compiler.Visitors {
             } else if (node is ListDcl) {
                 return 6;
             } else {
-                error("not a type");
+                Error("not a type");
                 return -24;
             }
         }

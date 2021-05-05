@@ -1,9 +1,8 @@
 int a = 4;
 float f = 2.5;
 int ON = 1;
-int TRUE = 1;
+boolean asd = TRUE;
 int OFF = 0;
-int FALSE = 0;
 boolean qq;
 string text = "th8is a 2 test !";
 List<List<string>> testList = {{text}, {"list"}, {"thing"}};
@@ -27,6 +26,13 @@ struct pin {
 struct pin led{pinNum = 13, pinMode = 1};
 int ledPin = led.pinNum;
 
+/*struct RGB{
+	// TODO allow new uninitiated structs
+	//struct pin blue{};
+	// TODO allow lists of structs
+	List<pin> RGB;
+}*/
+
 setup {
 	testList[0][0] = testlisty;
 	List<string> ww = testList[0];
@@ -35,8 +41,7 @@ setup {
 
 	led.pinPower = 100;
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
-	boolean y = 1;
-	y = 1.5;
+	boolean y = TRUE;
 	void w;
 	for (int i = 0; i <= 10; i = i + 1){
 		if (1) {
@@ -53,7 +58,7 @@ loop {
 
 int test(int numi, float numf) {
 	float t = 13.37;
-
+	return numi;
 }
 
 /*-------------------------------------------------------------*/
@@ -61,9 +66,10 @@ int test(int numi, float numf) {
 int main() {
 	while(ON){
 		int b = 1;
-		if (b) {
+		if ( ((b+5) > 5) == TRUE ) {
 			int d = 3;
 		}
 		test(b, 3.4);
 	}
+	return 1;
 }

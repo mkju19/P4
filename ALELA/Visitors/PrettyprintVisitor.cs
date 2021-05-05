@@ -92,6 +92,11 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
+            if (n.returnValue != null) {
+                emit("return ");
+                n.returnValue.accept(this);
+                emit(";\n");
+            }
             emit("}\n");
         }
 
@@ -276,6 +281,12 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(Expression n) {
+            n.childe1.accept(this);
+            emit($" {n.operation} ");
+            n.childe2?.accept(this);
+        }
+
+        public override void Visit(LogiExpression n) {
             n.childe1.accept(this);
             emit($" {n.operation} ");
             n.childe2?.accept(this);

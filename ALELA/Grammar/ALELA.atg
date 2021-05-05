@@ -17,6 +17,9 @@ TOKENS
    intnumber = digit {digit}.
    floatnumber = digit {digit} '.' digit {digit}.
    id = letter {letter | digit}.
+   true = "TRUE".
+   false = "FALSE".
+   //bool = ("TRUE" | "FALSE").
    stringtext = '"' {AllUTF8} '"'.
    newline = lf.
 	
@@ -101,13 +104,17 @@ PRODUCTIONS
 	| ASSIG <out e, id>.
 
 	VALUE <out AST e> (. e = null; List<AST> elist = new List<AST>(); .)
-	= /*( "TRUE" | "FALSE" ) (. e = new BooleanConst(t.val); )
-	|*/ intnumber (. e = new IntConst(t.val); .)
+	= BOOL (. e = new BooleanConst(t.val); .)
+	| intnumber (. e = new IntConst(t.val); .)
 	| floatnumber (. e = new FloatConst(t.val); .)
 	| stringtext (. e = new StringConst(t.val); .)
 	| LISTCONST <out e>
 	| IDENTIFIER <out e> [FUNC <out elist> (. e = new FunctionStmt(e, elist); .)].
 	
+	BOOL
+	= true
+	| false.
+
 	IDENTIFIER <out AST e> (. e = null; List<AST> elist = new List<AST>(); AST ei = null; .)
 	= id (. string id = t.val; e = new SymReferencing(id); .)
 		[( '.' IDENTIFIER <out ei> (. e = new DotReferencing(e, ei); .)
@@ -123,41 +130,43 @@ PRODUCTIONS
 	= '(' [EXPR <out v> (. e.Add(v); .) {',' EXPR <out v> (. e.Add(v); .)}] ')'
 	(. eo = e; .).
 
-	FUNCDECL <out AST e, SymDeclaring e1> (. SymDeclaring e11; List<SymDeclaring> e2 = new List<SymDeclaring>();  List<AST> e3 = new List<AST>(); .)
-	= '(' [TYPE <out e11> id (. e11.id = t.val; e2.Add(e11); .) {',' TYPE <out e11> id (. e11.id = t.val;  e2.Add(e11);.)}] ')' BLOCK <out e3>
-	(. e = new FuncDecl(e1, e2, e3); .). // may need extra id
+	FUNCDECL <out AST eo, SymDeclaring e1> (. AST e = null; AST rv = null; SymDeclaring e11; List<SymDeclaring> e2 = new List<SymDeclaring>();  List<AST> e3 = new List<AST>(); .)
+	= '(' [TYPE <out e11> id (. e11.id = t.val; e2.Add(e11); .) {',' TYPE <out e11> id (. e11.id = t.val;  e2.Add(e11);.)}] ')'
+		'{' {STMT <out e> (. e3.Add(e); .) } ["return" EXPR <out rv> ';'] '}'
+		(. eo = new FuncDecl(e1, e2, e3, rv); .).
 
 	LOGI_EXPR <out AST e> 
 	= LOGI_AND <out e> [LOGI_OR <e, out e>].
 	
 	LOGI_OR <AST e, out AST eo> (. string op; AST e2; .)
-	= "||" (. op = t.val; .) LOGI_EXPR <out e2> (. eo = new Expression(op, e, e2); .).
+	= "||" (. op = t.val; .) LOGI_EXPR <out e2> (. eo = new LogiExpression(op, e, e2); .).
 	
 	LOGI_AND <out AST e>
 	= LOGI_EQUAL <out e> [LOGI_ANDOp <e, out e>].
 
 	LOGI_ANDOp <AST e, out AST eo> (. string op; AST e2; .)
-	= "&" (. op = t.val; .) LOGI_EQUAL <out e2> (. eo = new Expression(op, e, e2); .).
+	= "&" (. op = t.val; .) LOGI_EQUAL <out e2> (. eo = new LogiExpression(op, e, e2); .).
 	
 	LOGI_EQUAL <out AST e>
 	= LOGI_LG <out e> [LOGI_EQUALOp <e, out e>].
 
 	LOGI_EQUALOp <AST e, out AST eo> (. string op; AST e2; .)
-	= ( "==" | "!=" ) (. op = t.val; .) LOGI_LG <out e2> (. eo = new Expression(op, e, e2); .).
+	= ( "==" | "!=" ) (. op = t.val; .) LOGI_LG <out e2> (. eo = new LogiExpression(op, e, e2); .).
 	
 	LOGI_LG <out AST e>
 	= LOGI_NOT <out e> [LOGI_LGOp <e, out e>].
 	
 	LOGI_LGOp <AST e, out AST eo> (. string op; AST e2; .)
-	= ( ">=" | '>' | "<=" | '<' ) (. op = t.val; .) LOGI_NOT <out e2> (. eo = new Expression(op, e, e2); .).
+	= ( ">=" | '>' | "<=" | '<' ) (. op = t.val; .) LOGI_NOT <out e2> (. eo = new LogiExpression(op, e, e2); .).
 	
 	LOGI_NOT <out AST e> (. AST e2; e = null; .)
 	= '!' LOGI_NOT <out e2> (. e = new NotExpression(e2); .)
 	| LOGI_TERM <out e>.
 	
 	LOGI_TERM <out AST e> (. e = null; .)
-	= VALUE <out e>
-	| '(' LOGI_EXPR <out e> ')'.
+	= EXPR <out e>
+	/*| VALUE <out e>
+	| '(' LOGI_EXPR <out e> ')'*/.
 
 	EXPR <out AST e>
 	= multExpr <out e> [addExpr <e, out e>].
@@ -173,7 +182,7 @@ PRODUCTIONS
 
 	terminalExpr <out AST e> (. e = null; .)
 	= VALUE <out e>
-	| '(' EXPR <out e> ')'.
+	| '(' LOGI_EXPR <out e> ')'.
 
 	TYPE <out SymDeclaring e> (. e = null; SymDeclaring lt = null; .)
 	= "void" (. e = new VoidDcl(); .)

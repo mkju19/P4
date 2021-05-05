@@ -5,7 +5,7 @@ using CommandLine;
 namespace ALELA_Compiler {
     class Program {
         static void Main(string[] args) {
-            //TODO finis args handler an file output
+            //TODO finis args handler and file output
             //var result = CommandLine.Parser.Default.ParseArguments<Options>(args);
             ArgsHandler argsHandler = new ArgsHandler(args);
             string file = argsHandler.InFile;

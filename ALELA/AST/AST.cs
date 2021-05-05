@@ -96,10 +96,12 @@ namespace ALELA_Compiler {
         public SymDeclaring declaring;
         public List<SymDeclaring> declarings;
         public List<AST> statments;
-        public FuncDecl(SymDeclaring Declaring, List<SymDeclaring> Declarings, List<AST> Statments) {
+        public AST returnValue;
+        public FuncDecl(SymDeclaring Declaring, List<SymDeclaring> Declarings, List<AST> Statments, AST ReturnValue) {
             declaring = Declaring;
             declarings = Declarings;
             statments = Statments;
+            returnValue = ReturnValue;
         }
         public override void accept(Visitor v) { v.Visit(this); }
     }
@@ -272,6 +274,17 @@ namespace ALELA_Compiler {
         public string operation;
         public AST childe1, childe2;
         public Expression(string op, AST ch1, AST ch2) {
+            operation = op;
+            childe1 = ch1;
+            childe2 = ch2;
+        }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class LogiExpression : AST {
+        public string operation;
+        public AST childe1, childe2;
+        public LogiExpression(string op, AST ch1, AST ch2) {
             operation = op;
             childe1 = ch1;
             childe2 = ch2;

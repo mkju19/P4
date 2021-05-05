@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ALELA_Compiler.Visitors {
-    class InitiationChecker : Visitor {
+    public class InitiationChecker : Visitor {
         private int scopeLevel = 1;
         private List<int> scopekey = new List<int>() { 1 };
         private Dictionary<Tuple<string, string>, int> InitiationTable = new Dictionary<Tuple<string, string>, int>();
         private Dictionary<string, List<Tuple<string, int>>> StructDic = new Dictionary<string, List<Tuple<string, int>>>();
         private string currentStructType = "";
+
+        public Dictionary<Tuple<string, string>, int> getInitiationTable { get { return InitiationTable; } }
+        public Dictionary<string, List<Tuple<string, int>>> getStructDic { get { return StructDic; } }
 
         public InitiationChecker(Dictionary<string, List<Tuple<string, int>>> Dic) {
             foreach (KeyValuePair<Tuple<string, string>, int> keyValues in AST.SymbolTable) {
@@ -87,6 +90,7 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.statments) {
                 ast.accept(this);
             }
+            if (n.returnValue != null) n.returnValue.accept(this);
             minusScope();
         }
 
@@ -256,6 +260,11 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(Expression n) {
             n.childe1.accept(this);
             n.childe2.accept(this);
+        }
+
+        public override void Visit(LogiExpression n) {
+            n.childe1.accept(this);
+            n.childe2?.accept(this);
         }
 
         public override void Visit(NotExpression n) {
