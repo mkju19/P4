@@ -297,6 +297,11 @@ namespace ALELA_Compiler.Visitors {
             n.childe.accept(this);
         }
 
+        public override void Visit(ConvertingToString n) {
+            emit(" v2s ");
+            n.child.accept(this);
+        }
+
         public override void Visit(ConvertingToFloat n) {
             emit(" i2f ");
             n.child.accept(this);

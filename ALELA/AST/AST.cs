@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ALELA_Compiler {
     public abstract class AST {
-        public static int VOID = 0, BOOLEAN = 1, INTTYPE = 2, FLTTYPE = 3, STRING = 4, STRUCT = 5, LIST = 6;
+        public static int VOID = 0, BOOLEAN = 1, INTTYPE = 2, FLTTYPE = 3, STRING = 4, STRUCT = 5, LIST = 6, UART = 7, PIN = 8;
         public int type;
         public static Dictionary<Tuple<string, string>, int> SymbolTable = new Dictionary<Tuple<string, string>, int>();
         public abstract void accept(Visitor v);
@@ -238,31 +238,32 @@ namespace ALELA_Compiler {
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class BooleanConst : AST {
+    public class SymConst : AST {
         public string val;
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class BooleanConst : SymConst {
         public BooleanConst(string v) { val = v; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class IntConst : AST {
-        public string val;
+    public class IntConst : SymConst {
         public IntConst(string v) { val = v; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class FloatConst : AST {
-        public string val;
+    public class FloatConst : SymConst {
         public FloatConst(string v) { val = v; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class StringConst : AST {
-        public string val;
+    public class StringConst : SymConst {
         public StringConst(string v) { val = v; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class ListConst : AST {
+    public class ListConst : SymConst {
         public List<AST> declarings;
         public ListConst(List<AST> Declarings) {
             declarings = Declarings;
@@ -297,6 +298,12 @@ namespace ALELA_Compiler {
         public NotExpression(AST ch1) {
             childe = ch1;
         }
+        public override void accept(Visitor v) { v.Visit(this); }
+    }
+
+    public class ConvertingToString : AST {
+        public AST child;
+        public ConvertingToString(AST n) { child = n; }
         public override void accept(Visitor v) { v.Visit(this); }
     }
 

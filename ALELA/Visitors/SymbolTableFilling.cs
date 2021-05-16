@@ -175,6 +175,7 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
+            n.id.accept(this);
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
@@ -185,11 +186,18 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(SymReferencing n) {
-            //throw new NotImplementedException();
         }
 
         public override void Visit(DotReferencing n) {
-            //throw new NotImplementedException();
+            if (n.dotId is SymReferencing dotSerial && dotSerial.id == "begin") {
+                if ((n.id.id == "Serial" || n.id.id == "Serial1" || n.id.id == "Serial2" || n.id.id == "Serial3") && (!KeyValExists(n.id.id))) {
+                    if (!KeyValExists(n.id.id)) AST.SymbolTable.Add(new Tuple<string, string>("1", n.id.id), AST.UART);
+                    else error("variable " + n.id.id + " is already declared");
+                }
+            } else if (n.dotId is SymReferencing dotPin && dotPin.id == "pinMode") {
+                if (!KeyValExists(n.id.id)) AST.SymbolTable.Add(new Tuple<string, string>("1", n.id.id), AST.PIN);
+                else error("variable " + n.id.id + " is already declared");
+            }
         }
 
         public override void Visit(ListReferencing n) {
@@ -230,6 +238,10 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(NotExpression n) {
             n.childe.accept(this);
+        }
+
+        public override void Visit(ConvertingToString n) {
+            n.child.accept(this);
         }
 
         public override void Visit(ConvertingToFloat n) {

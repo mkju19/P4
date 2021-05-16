@@ -1,12 +1,8 @@
 int a = 4;
 float f = 2.5;
-int ON = 1;
-boolean asd = TRUE;
-int OFF = 0;
 boolean qq;
 string text = "th8is a 2 test !";
-List<List<string>> testList = {{text}, {"list"}, {"thing"}};
-string testlisty = testList[1 - 1][OFF];
+List<string> testList;
 /*-------------------------------------------------------------*/
 
 struct pin {
@@ -23,8 +19,9 @@ struct pin {
 	}
 };
 
+
 struct pin led{pinNum = 13, pinMode = 1};
-int ledPin = led.pinNum;
+int leddPin = led.pinNum;
 
 /*struct RGB{
 	// TODO allow new uninitiated structs
@@ -34,10 +31,20 @@ int ledPin = led.pinNum;
 }*/
 
 setup {
-	testList[0][0] = testlisty;
-	List<string> ww = testList[0];
-	testList[0] = ww;
-	testList[0] = {"test", "work?"};
+	Serial.begin(9600);
+	Serial.printLine(leddPin);
+	testList.add(text);
+	testList.add("test");
+	testList.add("list");
+
+	string testlisty = testList.get(0);
+	led.Power(100);
+	testList.add("test");
+	testList.add(testlisty);
+	List<string> ww;
+	ww.add(testList.get(0));
+
+	Serial.print(ww.get(0));
 
 	led.pinPower = 100;
 	int b = 4 + 2 * 5 + (2 - 1 / 4 - 5) % 5;
@@ -46,14 +53,23 @@ setup {
 	for (int i = 0; i <= 10; i = i + 1){
 		if (1) {
 		}
-		f = f + 3;
+		Serial.printLine(f + i);
 	}
+
+	ledPin.pinMode(13, OUTPUT);
+	led2Pin.pinMode(11, OUTPUT);
+	buttPin.pinMode(8, INPUT_PULLUP);
+	anButtPin.pinMode(A0, INPUT);
 }
 
 loop {
 	int q = 1;
 	float b = 3;
 	a = a + test(q, b);
+	delay(100);
+	ledPin.digitalPower(buttPin.digitalRead());
+	led2Pin.analogPower(anButtPin.analogRead());
+	Serial.printLine("Potentiometer: " + anButtPin.analogRead() + "%" + "	Value: " + anButtPin.analogReadValue());
 }
 
 int test(int numi, float numf) {
@@ -63,7 +79,7 @@ int test(int numi, float numf) {
 
 /*-------------------------------------------------------------*/
 
-int main() {
+int notMain() {
 	while(ON){
 		int b = 1;
 		if ( ((b+5) > 5) == TRUE ) {

@@ -12,11 +12,13 @@ namespace ALELA_Compiler {
             //string file = "./prog.txt";
             Scanner scanner = new Scanner(file);
             Parser parser = new Parser(scanner);
+            STD std = new STD();
             parser.Parse();
+            std.AddTo(parser.ProgramAST);
             Console.WriteLine($" {parser.errors.count} errors detected\n");
 
             if (parser.errors.count == 0) {
-                try {
+                //try {
                     Visitors.PrettyprintVisitor prettyprint = new Visitors.PrettyprintVisitor();
                     if (argsHandler.verbose == true) {
                         parser.ProgramAST.accept(prettyprint);
@@ -26,6 +28,7 @@ namespace ALELA_Compiler {
 
                     Visitors.SymbolTableFilling symbolTable = new Visitors.SymbolTableFilling();
                     parser.ProgramAST.accept(symbolTable);
+                    Console.WriteLine(symbolTable.PrintSymbolTable());
                     Console.WriteLine("  Symbol Table filling successful");
 
                     Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
@@ -44,7 +47,7 @@ namespace ALELA_Compiler {
                     }
 
                     if (argsHandler.arduinoCode == true) {
-                        Visitors.CppArduinoCodeGenerator cppArduinoCodeGenerator = new Visitors.CppArduinoCodeGenerator();
+                        Visitors.CppArduinoCodeGenerator cppArduinoCodeGenerator = new Visitors.CppArduinoCodeGenerator(parser.ProgramAST);
                         parser.ProgramAST.accept(cppArduinoCodeGenerator);
                         Console.WriteLine(cppArduinoCodeGenerator.Code);
                         Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
@@ -52,9 +55,9 @@ namespace ALELA_Compiler {
 
                     Console.WriteLine(initiationChecker.UnusedVariables());
 
-                } catch (Exception e) {
+                /*} catch (Exception e) {
                     Console.WriteLine(e.Message);
-                }
+                }*/
 
             }
         }

@@ -192,8 +192,13 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            SymReferencing current = n.id as SymReferencing;
-            n.type = AST.SymbolTable[GetKeyVal(current.id)];
+            if (n.id is DotReferencing) {
+                n.id.accept(this);
+                n.type = n.id.type;
+            } else {
+                SymReferencing current = n.id as SymReferencing;
+                n.type = AST.SymbolTable[GetKeyVal(current.id)];
+            }
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
@@ -231,17 +236,107 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(DotReferencing n) { //TODO add support for structs in structs
             n.id.accept(this);
-            if (n.id.type != AST.STRUCT) Error($"{n.id.id} is not of type struct");
-            if (n.dotId is SymReferencing) {
+            if (n.id.type.ToString().Contains("6")) {
                 SymReferencing sym = n.dotId as SymReferencing;
-                if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
-                    Error($"{sym.id} doesn't exist in {n.id.id}");
-                n.dotId.type = StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2;
-            } else if (n.dotId is DotReferencing) {
-                DotReferencing dot = n.dotId as DotReferencing;
-                if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
-                    Error($"{dot.id.id} doesn't exist in {n.id.id}");
-                n.dotId.accept(this);
+                int newType = int.Parse(n.id.type.ToString().Substring(1));
+                switch (sym.id) {
+                    case "size":
+                        n.dotId.type = AST.INTTYPE;
+                        break;
+                    case "add":
+                        n.dotId.type = AST.BOOLEAN;
+                        break;
+                    case "unshift":
+                        n.dotId.type = AST.BOOLEAN;
+                        break;
+                    case "set":
+                        n.dotId.type = AST.BOOLEAN;
+                        break;
+                    case "remove":
+                        n.dotId.type = newType;
+                        break;
+                    case "pop":
+                        n.dotId.type = newType;
+                        break;
+                    case "shift":
+                        n.dotId.type = newType;
+                        break;
+                    case "get":
+                        n.dotId.type = newType;
+                        break;
+                    case "clear":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    default:
+                        Error($"{sym.id} is not a valid function on Lists");
+                        break;
+                }
+            } else if(n.id.type == AST.UART) {
+                SymReferencing sym = n.dotId as SymReferencing;
+                switch (sym.id) {
+                    case "begin":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "print":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "printLine":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "read":
+                        n.dotId.type = AST.STRING;
+                        break;
+                    case "parseInt":
+                        n.dotId.type = AST.INTTYPE;
+                        break;
+                    case "available":
+                        n.dotId.type = AST.BOOLEAN;
+                        break;
+                    default:
+                        Error($"{sym.id} is not a valid function on serial");
+                        break;
+                }
+            } else if (n.id.type == AST.PIN) {
+                SymReferencing sym = n.dotId as SymReferencing;
+                switch (sym.id) {
+                    case "pinMode":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "digitalPower":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "analogPower":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "powerValue":
+                        n.dotId.type = AST.VOID;
+                        break;
+                    case "digitalRead":
+                        n.dotId.type = AST.BOOLEAN;
+                        break;
+                    case "analogRead":
+                        n.dotId.type = AST.INTTYPE;
+                        break;
+                    case "analogReadValue":
+                        n.dotId.type = AST.INTTYPE;
+                        break;
+                    default:
+                        Error($"{sym.id} is not a valid function on pins");
+                        break;
+                }
+            } else if (n.id.type != AST.STRUCT) Error($"{n.id.id} is not of type struct");
+            else {
+                if (n.dotId is SymReferencing) {
+                    SymReferencing sym = n.dotId as SymReferencing;
+                    if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
+                        Error($"{sym.id} doesn't exist in {n.id.id}");
+                    n.dotId.type = StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2;
+                } else if (n.dotId is DotReferencing) {
+                    DotReferencing dot = n.dotId as DotReferencing;
+                    if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
+                        Error($"{dot.id.id} doesn't exist in {n.id.id}");
+                    n.dotId.accept(this);
+                }
             }
             n.type = n.dotId.type;
         }
@@ -295,6 +390,8 @@ namespace ALELA_Compiler.Visitors {
             int m = Generalize(n.childe1.type, n.childe2.type);
             n.childe1 = Convert(n.childe1, m);
             n.childe2 = Convert(n.childe2, m);
+            if ((n.childe1 is ConvertingToString || n.childe2 is ConvertingToString)
+                && n.operation != "+") Error("Illegal expression on STRING");
             n.type = m;
         }
 
@@ -309,6 +406,11 @@ namespace ALELA_Compiler.Visitors {
             n.type = n.childe.type;
         }
 
+        public override void Visit(ConvertingToString n) {
+            n.child.accept(this);
+            n.type = AST.STRING;
+        }
+
         public override void Visit(ConvertingToFloat n) {
             n.child.accept(this);
             n.type = AST.FLTTYPE;
@@ -321,8 +423,8 @@ namespace ALELA_Compiler.Visitors {
 
         private int Generalize(int t1, int t2) {
             if (t1 == AST.VOID || t2 == AST.VOID) return AST.VOID;
-            else if (t1 == AST.BOOLEAN || t2 == AST.BOOLEAN) return AST.BOOLEAN;
             else if (t1 == AST.STRING || t2 == AST.STRING) return AST.STRING;
+            else if (t1 == AST.BOOLEAN || t2 == AST.BOOLEAN) return AST.BOOLEAN;
             else if (t1 == AST.FLTTYPE || t2 == AST.FLTTYPE) return AST.FLTTYPE;
             else if (t1 == AST.STRUCT || t2 == AST.STRUCT) return AST.STRUCT;
             else if (t1.ToString().Length > 1 || t1 == AST.LIST) return t1;
@@ -333,8 +435,8 @@ namespace ALELA_Compiler.Visitors {
         private AST Convert(AST n, int t) {
             /*n = note to convert t = final type*/
             if (n.type == AST.VOID || t == AST.VOID) Error("Illegal VOID conversion");
-            if (n.type != AST.STRING && t == AST.STRING) Error("Illegal STRING conversion");
             if (n.type == AST.STRING && t != AST.STRING) Error("Illegal STRING conversion");
+            if ((n.type == AST.BOOLEAN || n.type == AST.INTTYPE || n.type == AST.FLTTYPE ) && t == AST.STRING) return new ConvertingToString(n);
             if (n.type != AST.STRUCT && t == AST.STRUCT) Error("Illegal STRUCT conversion");
             if (n.type == AST.STRUCT && t != AST.STRUCT) Error("Illegal STRUCT conversion");
             if (n.type != AST.LIST && t == AST.LIST) Error("Illegal LIST conversion");
@@ -389,11 +491,159 @@ namespace ALELA_Compiler.Visitors {
                     }
                 }
             }
+            ListFunctionCheck();
+            UARTFunctionCheck();
+            PinFunctionCheck();
+        }
+
+        private void ListFunctionCheck() {
+            foreach (FunctionStmt item in funcCalls) {
+                if (!(item.id is DotReferencing dot)) continue;
+                else if (!(dot.id.type.ToString().Contains('6'))) continue;
+                else {
+                    var sym = dot.dotId as SymReferencing;
+                    switch (sym.id) {
+                        case "size":
+                            if (item.param_list.Count != 0)
+                                Error("size()");
+                            break;
+                        case "add":
+                            if (!((item.param_list.Count == 1 && item.param_list[0].type == int.Parse(dot.id.type.ToString().Substring(1)))
+                                || (item.param_list.Count == 2 && item.param_list[0].type == AST.INTTYPE
+                                    && item.param_list[1].type == int.Parse(dot.id.type.ToString().Substring(1))))){
+                                Error("add(T) or add(int index, T)");
+                            }
+                            break;
+                        case "unshift":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != int.Parse(dot.id.type.ToString().Substring(1)))
+                                Error("unshift(T)");
+                            break;
+                        case "set":
+                            if (item.param_list.Count != 2 || item.param_list[0].type != AST.INTTYPE || item.param_list[2].type != int.Parse(dot.id.type.ToString().Substring(1)))
+                                Error("set(int index, T)");
+                            break;
+                        case "remove":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.INTTYPE)
+                                Error("remove(int index)");
+                            break;
+                        case "pop":
+                            if (item.param_list.Count != 0)
+                                Error("pop()");
+                            break;
+                        case "shift":
+                            if (item.param_list.Count != 0)
+                                Error("shift()");
+                            break;
+                        case "get":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.INTTYPE)
+                                Error("get(int index)");
+                            break;
+                        case "clear":
+                            if (item.param_list.Count != 0)
+                                Error("clear()");
+                            break;
+                        default:
+                            Error($"{sym.id} is not a valid function on Lists");
+                            break;
+                    }
+                }
+            }
+
+        }
+
+        private void UARTFunctionCheck() {
+            foreach (FunctionStmt item in funcCalls) {
+                if (!(item.id is DotReferencing dot)) continue;
+                else if (dot.id.type != AST.UART) continue;
+                else {
+                    var sym = dot.dotId as SymReferencing;
+                    switch (sym.id) {
+                        case "begin":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.INTTYPE)
+                                Error("begin(int val)");
+                            break;
+                        case "print":
+                            //TODO add support for "Serial.print(val, format)"
+                            if (item.param_list.Count != 1 || item.param_list[0].type == AST.VOID)
+                                Error("print(val)");
+                            break;
+                        case "printLine":
+                            //TODO add support for "Serial.print(val, format)"
+                            if (item.param_list.Count != 1 || item.param_list[0].type == AST.VOID)
+                                Error("printLine(val)");
+                            break;
+                        case "read":
+                            if (item.param_list.Count != 0)
+                                Error("read()");
+                            break;
+                        case "parseInt":
+                            //TODO add support for "Serial.parseInt(lookahead)"
+                            //TODO add support for "Serial.parseInt(lookahead, ignore)"
+                            if (item.param_list.Count != 0)
+                                Error("parseInt()");
+                            break;
+                        case "available":
+                            if (item.param_list.Count != 0)
+                                Error("available()");
+                            break;
+                        default:
+                            Error($"{sym.id} is not a valid function on serial");
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void PinFunctionCheck() {
+            foreach (FunctionStmt item in funcCalls) {
+                if (!(item.id is DotReferencing dot)) continue;
+                else if (dot.id.type != AST.PIN) continue;
+                else {
+                    var sym = dot.dotId as SymReferencing;
+                    switch (sym.id) {
+                        case "pinMode":
+                            if (item.param_list.Count != 2 || item.param_list[0].type != AST.INTTYPE || item.param_list[1].type != AST.INTTYPE)
+                                Error("pinMode(int pin, int mode)");
+                            break;
+                        case "digitalPower":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.BOOLEAN)
+                                Error("digitalPower(int val)");
+                            break;
+                        case "analogPower":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.INTTYPE)
+                                Error("analogPower(int val)");
+                            break;
+                        case "powerValue":
+                            if (item.param_list.Count != 1 || item.param_list[0].type != AST.INTTYPE)
+                                Error("powerValue(int val)");
+                            break;
+                        case "digitalRead":
+                            if (item.param_list.Count != 0)
+                                Error("digitalRead()");
+                            break;
+                        case "analogRead":
+                            if (item.param_list.Count != 0)
+                                Error("analogRead()");
+                            break;
+                        case "analogReadValue":
+                            if (item.param_list.Count != 0)
+                                Error("analogReadValue()");
+                            break;
+                        default:
+                            Error($"{sym.id} is not a valid function on pin");
+                            break;
+                    }
+                }
+            }
         }
 
         private string FindId(AST node) {
-            SymReferencing current = node as SymReferencing;
-            return current.id;
+            if (node is DotReferencing) {
+                return GetLastID(node);
+            } else {
+                SymReferencing current = node as SymReferencing;
+                return current.id;
+            }
         }
 
         private int GetType(AST node) {

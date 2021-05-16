@@ -96,14 +96,14 @@ namespace ALELA_Test {
                     new Dictionary<Tuple<string, string>, int>() {
                         {new Tuple<string, string>("1", "text"), 1},
                         {new Tuple<string, string>("1", "testList"), 1},
-                        {new Tuple<string, string>("1", "pin"), 1},
-                        {new Tuple<string, string>("11", "pinPower"), 1},
-                        {new Tuple<string, string>("111", "value"), 1},
-                        {new Tuple<string, string>("11", "Power"), 1},
-                        {new Tuple<string, string>("111", "pinPower"), 1}
+                        {new Tuple<string, string>("1", "pin"), 1}
                     };
                 expectedStruct =
                     new Dictionary<string, List<Tuple<string, int>>>() {
+                        {"pin", new List<Tuple<string, int>>(){
+                            new Tuple<string, int>("pinPower", 0),
+                            new Tuple<string, int>("Power", 1)}
+                        },
                         {"led", new List<Tuple<string, int>>(){
                             new Tuple<string, int>("pinPower", 0),
                             new Tuple<string, int>("Power", 0)}
@@ -123,16 +123,16 @@ namespace ALELA_Test {
                         {new Tuple<string, string>("1", "text"), 1},
                         {new Tuple<string, string>("1", "testList"), 1},
                         {new Tuple<string, string>("1", "pin"), 1},
-                        {new Tuple<string, string>("11", "pinPower"), 1},
-                        {new Tuple<string, string>("111", "value"), 1},
-                        {new Tuple<string, string>("11", "Power"), 1},
-                        {new Tuple<string, string>("111", "pinPower"), 1},
                         {new Tuple<string, string>("1", "led"), 1}
                     };
                 expectedStruct =
                     new Dictionary<string, List<Tuple<string, int>>>() {
+                        {"pin", new List<Tuple<string, int>>(){
+                            new Tuple<string, int>("Power", 1),
+                            new Tuple<string, int>("pinPower", 1)}
+                        },
                         {"led", new List<Tuple<string, int>>(){
-                            new Tuple<string, int>("Power", 0),
+                            new Tuple<string, int>("Power", 1),
                             new Tuple<string, int>("pinPower", 1) }
                         }
                     };

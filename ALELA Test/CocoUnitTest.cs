@@ -25,8 +25,7 @@ namespace ALELA_Test {
                 new Decl(new FloatDcl("f"), new Assigning(new SymReferencing("f"), new FloatConst("2.5"))), //float f = 2.5;
                 new Decl(new BooleanDcl("asd"), new Assigning(new SymReferencing("asd"), new BooleanConst("TRUE"))), //boolean asd = TRUE;
                 new Decl(new StringDcl("text"), new Assigning(new SymReferencing("text"), new StringConst("\"th8is a 2 test !\""))), //string text = "th8is a 2 test !";
-                new Decl(new ListDcl("testList", new ListDcl(new StringDcl())), new Assigning(new SymReferencing("testList"), new ListConst(new List<AST>() { new ListConst(new List<AST>() { new SymReferencing("text") }), new ListConst(new List<AST>() { new StringConst("\"list\"") }), new ListConst(new List<AST>() { new StringConst("\"thing\"") }) }))), //List<List<string>> testList = {{text}, {"list"}, {"thing"}};
-                new Decl(new StringDcl("testlisty"), new Assigning(new SymReferencing("testlisty"), new ListReferencing(new SymReferencing("testList"), new List<AST>() { new Expression("-", new IntConst("1"), new IntConst("1")), new IntConst("1") }))), //string testlisty = testList[1 - 1][OFF];
+                new Decl(new ListDcl("testList", new ListDcl(new StringDcl())), null), //List<List<string>> testList;
                 new Decl(new StructDcl("pin"), new Assigning(new SymReferencing("pin"), structDef6)),
                 new Decl(new StructDcl("led"), new Assigning(new SymReferencing("led"), structDcel7)), //struct pin led{pinPower = 50};
                 new Decl(new IntDcl("ledPin"), new Assigning(new SymReferencing("ledPin"), new DotReferencing(new SymReferencing("led"), new SymReferencing("pinPower")))), // int ledPin = led.pinNum;

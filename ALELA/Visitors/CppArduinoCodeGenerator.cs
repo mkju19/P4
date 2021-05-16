@@ -4,9 +4,27 @@ using System.Text;
 
 namespace ALELA_Compiler.Visitors {
     class CppArduinoCodeGenerator : Visitor {
-        // TODO fix Lists (List not working)
+        public string Code = "-------------------------------------------\n#include <LinkedList.h>\n";
+        private Dictionary<string, string> pinValue = new Dictionary<string, string>();
+        private string serialTempString = "SerialMonitorTemporaryString";
+        
+        public CppArduinoCodeGenerator(Prog n) {
+            STD std = new STD();
+            std.RemoveFrom(n);
+            bool tempExists;
+            do {
+                tempExists = false;
+                foreach (var key in AST.SymbolTable.Keys) {
+                    if (key.Item2 == serialTempString) {
+                        serialTempString += "x";
+                        tempExists = true;
+                        break;
+                    }
+                }
+            } while (tempExists);
+            n.prog.Insert(0, new Decl(new StringDcl(serialTempString), new Assigning(new SymReferencing(serialTempString), new StringConst("\"\""))));
+        }
 
-        public string Code = "-------------------------------------------\n";
         public void emit(string c) {
             Code += c;
         }
@@ -30,7 +48,7 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
-            emit("\n}");
+            emit("\n}\n");
         }
 
         public override void Visit(SymDeclaring n) {
@@ -62,7 +80,11 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(ListDcl n) {
-            int depth = 0;
+            emit($"LinkedList<");
+            n.listType.accept(this);
+            emit($"> {n.id}");
+
+            /*int depth = 0;
             AST sT = n;
             while (sT is ListDcl) {
                 depth++;
@@ -73,7 +95,7 @@ namespace ALELA_Compiler.Visitors {
             emit($"{n.id}");
             for (int i = 0; i < depth; i++) {
                 emit("[]");
-            }
+            }*/
         }
 
         public override void Visit(Decl n) {
@@ -113,13 +135,13 @@ namespace ALELA_Compiler.Visitors {
             if (n.returnValue != null) {
                 emit("return ");
                 n.returnValue.accept(this); emit(";\n");
-                emit("}\n");
             }
+            emit("}\n");
         }
 
         public override void Visit(StructDcel n) {
             SymReferencing sym = n.structType as SymReferencing;
-            Code = Code.Remove(Code.Length - $"struct {sym.id} = ".Length);
+            Code = Code.Remove(Code.Length - $"{sym.id} = ".Length); //TODO check is "struct {sym.id} = " is nessecary
             n.structType.accept(this);
             emit(" ");
             n.structId.accept(this);
@@ -230,18 +252,110 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            n.id.accept(this);
-            emit($"(");
-            if (n.param_list.Count > 0) {
-                AST first = n.param_list[0];
-                foreach (AST ast in n.param_list) {
-                    if (first != ast) {
-                        emit(", ");
-                    }
-                    ast.accept(this);
+            if (n.id is DotReferencing dot && dot.id.type == AST.PIN) {
+                var pinFunc = dot.dotId as SymReferencing;
+                switch (pinFunc.id) {
+                    case "pinMode":
+                        if (n.param_list[0] is SymConst symConst) {
+                            if (pinValue.ContainsKey(dot.id.id)) {
+                                pinValue[dot.id.id] = symConst.val;
+                            } else pinValue.Add(dot.id.id, symConst.val);
+                        } else if (n.param_list[0] is SymReferencing symReferencing) {
+                            if (pinValue.ContainsKey(dot.id.id)) {
+                                pinValue[dot.id.id] = symReferencing.id;
+                            } else pinValue.Add(dot.id.id, symReferencing.id);
+                        }
+                        emit("pinMode(");
+                        AST first = n.param_list[0];
+                        foreach (AST ast in n.param_list) {
+                            if (first != ast) {
+                                emit(", ");
+                            }
+                            ast.accept(this);
+                            IsFuncSTM(ast);
+                        }
+                        emit(");\n");
+                        break;
+                    case "digitalPower":
+                        emit($"digitalWrite({pinValue[dot.id.id]}, ");
+                        n.param_list[0].accept(this);
+                        IsFuncSTM(n.param_list[0]);
+                        emit(");\n");
+                        break;
+                    case "analogPower":
+                        emit($"analogWrite({pinValue[dot.id.id]}, map(constrain(");
+                        n.param_list[0].accept(this);
+                        IsFuncSTM(n.param_list[0]);
+                        emit(", 0, 100), 0, 100, 0, 255));\n");
+                        break;
+                    case "powerValue":
+                        emit($"analogWrite({pinValue[dot.id.id]}, constrain(");
+                        n.param_list[0].accept(this);
+                        IsFuncSTM(n.param_list[0]);
+                        emit(", 0, 255));\n");
+                        break;
+                    case "digitalRead":
+                        emit($"digitalRead({pinValue[dot.id.id]});\n");
+                        break;
+                    case "analogRead":
+                        emit($"map(analogRead({pinValue[dot.id.id]}), 0, 1023, 0, 100);\n");
+                        break;
+                    case "analogReadValue":
+                        emit($"analogRead({pinValue[dot.id.id]});\n");
+                        break;
                 }
+            } else if (n.id is DotReferencing dotserial && dotserial.id.type == AST.UART && (dotserial.dotId is SymReferencing dotId && (dotId.id == "print" || dotId.id == "printLine"))) {
+                if (n.param_list[0] is Expression) {
+                    emit($"{serialTempString} = \"\";\n");
+                    SerialExpressionPrint(n.param_list[0]);
+                    n.id.accept(this);
+                    emit($"({serialTempString});\n");
+                } else {
+                    n.id.accept(this);
+                    emit($"(");
+                    n.param_list[0].accept(this);
+                    IsFuncSTM(n.param_list[0]);
+                    emit(");\n");
+                }
+            } else {
+                n.id.accept(this);
+                emit($"(");
+                if (n.param_list.Count > 0) {
+                    AST first = n.param_list[0];
+                    foreach (AST ast in n.param_list) {
+                        if (first != ast) {
+                            emit(", ");
+                        }
+                        ast.accept(this);
+                        IsFuncSTM(ast);
+                    }
+                }
+                emit(");\n");
             }
-            emit(");\n");
+        }
+
+        private void SerialExpressionPrint(AST node) {
+            if (node is Expression expression && expression.type == AST.STRING) {
+                if (expression.childe1 is Expression) {
+                    SerialExpressionPrint(expression.childe1);
+                } else {
+                    AddToSerialTempString(expression.childe1);
+                }
+                if (expression.childe2 is Expression) {
+                    SerialExpressionPrint(expression.childe2);
+                } else {
+                    AddToSerialTempString(expression.childe2);
+                }
+            } else {
+                AddToSerialTempString(node);
+            }
+        }
+
+        private void AddToSerialTempString(AST node) {
+            emit($"{serialTempString} += ");
+            node.accept(this);
+            IsFuncSTM(node);
+            emit(";\n");
         }
 
         public override void Visit(Assigning n) {
@@ -254,6 +368,7 @@ namespace ALELA_Compiler.Visitors {
             n.id.accept(this);
             if (!(n.child is StructDef)) emit($" = ");
             n.child.accept(this);
+            IsFuncSTM(n.child);
             emit(";\n");
         }
 
@@ -264,7 +379,37 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(DotReferencing n) {
             n.id.accept(this);
             emit($".");
-            n.dotId.accept(this);
+            if (n.id.type == AST.UART && n.dotId is SymReferencing symSerial && symSerial.id == "printLine") {
+                symSerial.id = "println";
+                symSerial.accept(this);
+                symSerial.id = "printLine";
+            } else if (n.id.type == AST.PIN && n.dotId is SymReferencing symPin) {
+                switch (symPin.id) {
+                    case "digitalpower":
+                        symPin.id = "digitalWrite";
+                        symPin.accept(this);
+                        symPin.id = "digitalpower";
+                        break;
+                    case "analogpower":
+                        symPin.id = "analogWrite";
+                        symPin.accept(this);
+                        symPin.id = "analogpower";
+                        break;
+                    case "powerValue":
+                        symPin.id = "analogWrite";
+                        symPin.accept(this);
+                        symPin.id = "powerValue";
+                        break;
+                    case "analogReadValue":
+                        symPin.id = "analogRead";
+                        symPin.accept(this);
+                        symPin.id = "analogReadValue";
+                        break;
+                    default:
+                        symPin.accept(this);
+                        break;
+                }
+            } else n.dotId.accept(this);
         }
 
         public override void Visit(ListReferencing n) {
@@ -277,7 +422,7 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(BooleanConst n) {
-            emit($"{n.val}");
+            emit($"{n.val.ToLower()}");
         }
 
         public override void Visit(IntConst n) {
@@ -308,14 +453,27 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(Expression n) {
             n.childe1.accept(this);
+            IsFuncSTM(n.childe1);
             emit($" {n.operation} ");
             n.childe2?.accept(this);
+            IsFuncSTM(n.childe2);
         }
 
         public override void Visit(LogiExpression n) {
             n.childe1.accept(this);
+            IsFuncSTM(n.childe1);
             emit($" {n.operation} ");
             n.childe2?.accept(this);
+            IsFuncSTM(n.childe2);
+        }
+
+        private void IsFuncSTM(AST node) {
+            if (node is FunctionStmt ||
+                (node is ConvertingToBool toBool && toBool.child is FunctionStmt) ||
+                (node is ConvertingToFloat toFloat && toFloat.child is FunctionStmt) ||
+                (node is ConvertingToString toString && toString.child is FunctionStmt)) {
+                Code = Code.Remove(Code.Length - 2);
+            }
         }
 
         public override void Visit(NotExpression n) {
@@ -323,13 +481,15 @@ namespace ALELA_Compiler.Visitors {
             n.childe.accept(this);
         }
 
+        public override void Visit(ConvertingToString n) {
+            n.child.accept(this);
+        }
+
         public override void Visit(ConvertingToFloat n) {
-            //Console.Write(" i2f ");
             n.child.accept(this);
         }
 
         public override void Visit(ConvertingToBool n) {
-            //Console.Write(" v2b ");
             n.child.accept(this);
         }
     }

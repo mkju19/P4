@@ -2,8 +2,7 @@
 float f = 2.5;
 boolean asd = TRUE;
 string text = "th8is a 2 test !";
-List<List<string>> testList = {{text}, {"list"}, {"thing"}};
-string testlisty = testList[1 - 1][1];
+List<List<string>> testList;
 /*-------------------------------------------------------------*/
 
 struct pin {

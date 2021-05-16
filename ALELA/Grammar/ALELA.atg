@@ -16,7 +16,7 @@ TOKENS
    
    intnumber = digit {digit}.
    floatnumber = digit {digit} '.' digit {digit}.
-   id = letter {letter | digit}.
+   id = letter {letter | digit | '_' | '-'}.
    true = "TRUE".
    false = "FALSE".
    //bool = ("TRUE" | "FALSE").
@@ -108,7 +108,6 @@ PRODUCTIONS
 	| intnumber (. e = new IntConst(t.val); .)
 	| floatnumber (. e = new FloatConst(t.val); .)
 	| stringtext (. e = new StringConst(t.val); .)
-	| LISTCONST <out e>
 	| IDENTIFIER <out e> [FUNC <out elist> (. e = new FunctionStmt(e, elist); .)].
 	
 	BOOL
@@ -117,14 +116,11 @@ PRODUCTIONS
 
 	IDENTIFIER <out AST e> (. e = null; List<AST> elist = new List<AST>(); AST ei = null; .)
 	= id (. string id = t.val; e = new SymReferencing(id); .)
-		[( '.' IDENTIFIER <out ei> (. e = new DotReferencing(e, ei); .)
-			| ('[' EXPR <out ei> ']' (. elist.Add(ei); .) { '[' EXPR <out ei> ']' (. elist.Add(ei); .) }
-				(. e = new ListReferencing(e, elist); .) 
-				['.' IDENTIFIER <out ei> (. e = new DotReferencing(e, ei); .)]) )].
+		['.' IDENTIFIER <out ei> (. e = new DotReferencing(e, ei); .)].
 
-	LISTCONST <out AST eo> (. List<AST> e2 = new List<AST>(); AST e; .)
+	/*ARRAYCONST <out AST eo> (. List<AST> e2 = new List<AST>(); AST e; .)
 	= '{' EXPR <out e> (. e2.Add(e); .) {',' EXPR <out e> (. e2.Add(e); .) } '}'
-	(. eo = new ListConst(e2); .).
+	(. eo = new ListConst(e2); .).*/
 
 	FUNC <.out List<AST> eo.> (. AST v; List<AST> e = new List<AST>(); .)
 	= '(' [EXPR <out v> (. e.Add(v); .) {',' EXPR <out v> (. e.Add(v); .)}] ')'
@@ -145,7 +141,7 @@ PRODUCTIONS
 	= LOGI_EQUAL <out e> [LOGI_ANDOp <e, out e>].
 
 	LOGI_ANDOp <AST e, out AST eo> (. string op; AST e2; .)
-	= "&" (. op = t.val; .) LOGI_EQUAL <out e2> (. eo = new LogiExpression(op, e, e2); .).
+	= "&&" (. op = t.val; .) LOGI_EQUAL <out e2> (. eo = new LogiExpression(op, e, e2); .).
 	
 	LOGI_EQUAL <out AST e>
 	= LOGI_LG <out e> [LOGI_EQUALOp <e, out e>].

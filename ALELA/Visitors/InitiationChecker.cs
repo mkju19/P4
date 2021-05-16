@@ -9,6 +9,7 @@ namespace ALELA_Compiler.Visitors {
         private Dictionary<Tuple<string, string>, int> InitiationTable = new Dictionary<Tuple<string, string>, int>();
         private Dictionary<string, List<Tuple<string, int>>> StructDic = new Dictionary<string, List<Tuple<string, int>>>();
         private string currentStructType = "";
+        private List<string> ignoreStruct = new List<string>();
 
         public Dictionary<Tuple<string, string>, int> getInitiationTable { get { return InitiationTable; } }
         public Dictionary<string, List<Tuple<string, int>>> getStructDic { get { return StructDic; } }
@@ -38,6 +39,7 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             };
+            minusScope();
         }
 
         public override void Visit(ProgLoop n) {
@@ -98,7 +100,9 @@ namespace ALELA_Compiler.Visitors {
             string pastStructType = "";
             if (currentStructType != "") pastStructType = currentStructType;
             SymReferencing current = n.structId as SymReferencing;
+            SymReferencing type = n.structType as SymReferencing;
             currentStructType = current.id;
+            StructDic[current.id] = StructDic[type.id];
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
             }
@@ -108,15 +112,27 @@ namespace ALELA_Compiler.Visitors {
         public override void Visit(StructDef n) {
             plusScope();
             foreach (AST ast in n.declarings) {
-                if (ast is SymDeclaring) {
+                if (ast is FuncDecl) {
+                    FuncDecl func = ast as FuncDecl;
+                    SymReferencing typeId = n.structType as SymReferencing;
+                    var tuble = StructDic[typeId.id].Find(x => x.Item1 == func.declaring.id);
+                    StructDic[typeId.id].Remove(tuble);
+                    StructDic[typeId.id].Add(new Tuple<string, int>(tuble.Item1, 1));
+
+                    InitiationTable.Remove(GetKey(func.declaring.id));
+                    plusScope();
+                    foreach (var item in func.declarings) {
+                        InitiationTable.Remove(GetKey(item.id));
+                    }
+                    minusScope();
+                } else {
                     SymDeclaring sym = ast as SymDeclaring;
-                    InitiationTable[GetKey(sym.id)] = 1;
-                } else { 
-                    ast.accept(this);
+                    InitiationTable.Remove(GetKey(sym.id));
                 }
             }
             SymReferencing current = n.structType as SymReferencing;
-            StructDic.Remove(current.id);
+            ignoreStruct.Add(current.id);
+            //StructDic.Remove(current.id);
             minusScope();
         }
 
@@ -185,8 +201,13 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(FunctionStmt n) {
-            SymReferencing current = n.id as SymReferencing;
-            InitiationTable[FindKey(current.id)] = 1;
+            if (n.id is DotReferencing) {
+                n.id.accept(this);
+                n.type = n.id.type;
+            } else {
+                SymReferencing current = n.id as SymReferencing;
+                InitiationTable[FindKey(current.id)] = 1;
+            }
             foreach (AST ast in n.param_list) {
                 ast.accept(this);
             }
@@ -214,21 +235,55 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(SymReferencing n) {
-            if (!KeyValInit(n.id)) error($"{n.id} at {GetKey(n.id).Item1} is not initiated with a value");
+            if ((n.type == AST.UART || n.type == AST.PIN) && InitiationTable[new Tuple<string, string>("1", n.id)] != 1)
+                error($"{n.id} at {GetKey(n.id).Item1} is not initiated with a value");
+            else if (!KeyValInit(n.id)) error($"{n.id} at {GetKey(n.id).Item1} is not initiated with a value");
         }
 
         public override void Visit(DotReferencing n) { //TODO add support for structs in structs
-            if (n.dotId is SymReferencing) {
+            if (n.id.type.ToString().Contains("6")) {
                 SymReferencing sym = n.dotId as SymReferencing;
-                if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
-                    error($"{sym.id} doesn't exist in {n.id.id}");
-                if (StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2 != 1)
-                    error($"{sym.id} in {n.id.id} is not initiated with a value");
-            } else if (n.dotId is DotReferencing) {
-                DotReferencing dot = n.dotId as DotReferencing;
-                if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
-                    error($"{dot.id.id} doesn't exist in {n.id.id}");
-                n.dotId.accept(this);
+                switch (sym.id) {
+                    case "add":
+                        InitiationTable[FindKey(n.id.id)] = 1;
+                        break;
+                    default:
+                        n.id.accept(this);
+                        break;
+                }
+            } else if (n.id.type == AST.UART) {
+                SymReferencing sym = n.dotId as SymReferencing;
+                switch (sym.id) {
+                    case "begin":
+                        InitiationTable[new Tuple<string, string>("1", n.id.id)] = 1;
+                        break;
+                    default:
+                        n.id.accept(this);
+                        break;
+                }
+            } else if (n.id.type == AST.PIN) {
+                SymReferencing sym = n.dotId as SymReferencing;
+                switch (sym.id) {
+                    case "pinMode":
+                        InitiationTable[new Tuple<string, string>("1", n.id.id)] = 1;
+                        break;
+                    default:
+                        n.id.accept(this);
+                        break;
+                }
+            } else {
+                if (n.dotId is SymReferencing) {
+                    SymReferencing sym = n.dotId as SymReferencing;
+                    if (!StructDic[n.id.id].Exists(x => x.Item1 == sym.id))
+                        error($"{sym.id} doesn't exist in {n.id.id}");
+                    if (StructDic[n.id.id].Find(x => x.Item1 == sym.id).Item2 != 1)
+                        error($"{sym.id} in {n.id.id} is not initiated with a value");
+                } else if (n.dotId is DotReferencing) {
+                    DotReferencing dot = n.dotId as DotReferencing;
+                    if (!StructDic[n.id.id].Exists(x => x.Item1 == dot.id.id))
+                        error($"{dot.id.id} doesn't exist in {n.id.id}");
+                    n.dotId.accept(this);
+                }
             }
         }
 
@@ -269,6 +324,10 @@ namespace ALELA_Compiler.Visitors {
 
         public override void Visit(NotExpression n) {
             n.childe.accept(this);
+        }
+
+        public override void Visit(ConvertingToString n) {
+            n.child.accept(this);
         }
 
         public override void Visit(ConvertingToFloat n) {
@@ -332,6 +391,7 @@ namespace ALELA_Compiler.Visitors {
                 unused += $"Variable {keyValues.Key.Item2} at {keyValues.Key.Item1} is not used / initiated\n";
             }
             foreach (KeyValuePair<string, List<Tuple<string, int>>> structvaluePair in StructDic) {
+                if (ignoreStruct.Contains(structvaluePair.Key)) continue;
                 foreach (Tuple<string, int> item in structvaluePair.Value) {
                     if (item.Item2 != 0) continue;
                     unused += $"Variable {structvaluePair.Key}.{item.Item1} is not used / initiated\n";
