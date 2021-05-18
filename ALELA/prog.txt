@@ -66,10 +66,11 @@ loop {
 	int q = 1;
 	float b = 3;
 	a = a + test(q, b);
-	delay(100);
 	ledPin.digitalPower(buttPin.digitalRead());
 	led2Pin.analogPower(anButtPin.analogRead());
-	Serial.printLine("Potentiometer: " + anButtPin.analogRead() + "%" + "	Value: " + anButtPin.analogReadValue());
+	int time = timer();
+	Serial.printLine("Potentiometer: " + anButtPin.analogRead() + "%	Value: " + anButtPin.analogReadValue() + "	Time: " + (timer() - time) + "	fullTime: " + timer());
+	delay(100);
 }
 
 int test(int numi, float numf) {

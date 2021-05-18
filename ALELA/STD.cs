@@ -35,7 +35,8 @@ namespace ALELA_Compiler {
         }
         private List<AST> StandartFuncs() {
             return new List<AST>() {
-                new FuncDecl(new VoidDcl("delay"), new List<SymDeclaring>(){ new IntDcl("micros")}, new List<AST>(), null)
+                new FuncDecl(new VoidDcl("delay"), new List<SymDeclaring>(){ new IntDcl("micros")}, new List<AST>(), null),
+                new FuncDecl(new IntDcl("timer"), new List<SymDeclaring>(){}, new List<AST>(), new IntConst("0"))
             };
         }
     }

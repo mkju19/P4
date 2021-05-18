@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ALELA_Compiler.Visitors {
     class CppArduinoCodeGenerator : Visitor {
-        public string Code = "-------------------------------------------\n#include <LinkedList.h>\n";
+        public string Code = "#include <LinkedList.h>\n";
         private Dictionary<string, string> pinValue = new Dictionary<string, string>();
         private string serialTempString = "SerialMonitorTemporaryString";
         
@@ -32,7 +32,6 @@ namespace ALELA_Compiler.Visitors {
             foreach (AST ast in n.prog) {
                 ast.accept(this);
             }
-            emit("-------------------------------------------\n");
         }
 
         public override void Visit(ProgSetup n) {
@@ -317,6 +316,9 @@ namespace ALELA_Compiler.Visitors {
                     IsFuncSTM(n.param_list[0]);
                     emit(");\n");
                 }
+            } else if (n.id is SymReferencing sym && sym.id == "timer") {
+                emit("(millis() % 32767);\n");
+
             } else {
                 n.id.accept(this);
                 emit($"(");

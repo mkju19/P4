@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using CommandLine;
+using System.IO;
+using System.Text;
 
 namespace ALELA_Compiler {
     class Program {
@@ -28,7 +28,7 @@ namespace ALELA_Compiler {
 
                     Visitors.SymbolTableFilling symbolTable = new Visitors.SymbolTableFilling();
                     parser.ProgramAST.accept(symbolTable);
-                    Console.WriteLine(symbolTable.PrintSymbolTable());
+                    if (argsHandler.verbose == true)  Console.WriteLine(symbolTable.PrintSymbolTable());
                     Console.WriteLine("  Symbol Table filling successful");
 
                     Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
@@ -49,7 +49,13 @@ namespace ALELA_Compiler {
                     if (argsHandler.arduinoCode == true) {
                         Visitors.CppArduinoCodeGenerator cppArduinoCodeGenerator = new Visitors.CppArduinoCodeGenerator(parser.ProgramAST);
                         parser.ProgramAST.accept(cppArduinoCodeGenerator);
-                        Console.WriteLine(cppArduinoCodeGenerator.Code);
+                        if (argsHandler.createFile == true) {
+                        string currentPath = Directory.GetCurrentDirectory();
+                            using (FileStream fs = File.Create(Path.Combine(currentPath, argsHandler.OutFile))) {
+                                byte[] info = new UTF8Encoding(true).GetBytes(cppArduinoCodeGenerator.Code);
+                                fs.Write(info, 0, info.Length);
+                            }
+                        } else Console.WriteLine(cppArduinoCodeGenerator.Code);
                         Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
                     }
 
