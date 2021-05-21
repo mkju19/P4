@@ -10,7 +10,7 @@ namespace ALELA_Compiler {
         // TODO extende args handler
         public string[] Args;
         public string InFile, OutFile = "a.ino";
-        public bool verbose = false;
+        public bool verbose = true;
         public bool arduinoCode = false;
         public bool createFile = false;
         public ArgsHandler(string[] args) {

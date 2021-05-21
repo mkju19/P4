@@ -37,14 +37,14 @@ PRAGMAS
 
 PRODUCTIONS
 
-	ALELA (. List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>();
+	ALELA (. List<AST> astList = new List<AST>(); List<AST> nodeList = new List<AST>();
 			AST e; SymDeclaring e1 = null; AST idval; .)
-	= DECL <out e> (. liste.Add(e); .)
-	{ DECL <out e> (. liste.Add(e); .) }
-	"setup" BLOCK <out elist> (. liste.Add(new ProgSetup(elist)); .)
-	"loop" BLOCK <out elist> (. liste.Add(new ProgLoop(elist)); .)
-	{DCL <out e1, out idval> FUNCDECL <out e, e1> (. liste.Add(e); .)}
-	(. ProgramAST = new Prog(liste); .).
+	= DECL <out e> (. astList.Add(e); .)
+	{ DECL <out e> (. astList.Add(e); .) }
+	"setup" BLOCK <out nodeList> (. astList.Add(new ProgSetup(nodeList)); .)
+	"loop" BLOCK <out nodeList> (. astList.Add(new ProgLoop(nodeList)); .)
+	{DCL <out e1, out idval> FUNCDECL <out e, e1> (. astList.Add(e); .)}
+	(. ProgramAST = new Prog(astList); .).
     
 	DECL <out AST e> (. SymDeclaring e1; AST e2 = null; StructDcel es = null;
 	AST idval; List<AST> el = new List<AST>(); .)
