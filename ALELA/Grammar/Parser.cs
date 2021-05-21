@@ -90,26 +90,26 @@ public Prog ProgramAST;
 
 	
 	void ALELA() {
-		List<AST> liste = new List<AST>(); List<AST> elist = new List<AST>();
+		List<AST> astList = new List<AST>(); List<AST> nodeList = new List<AST>();
 		AST e; SymDeclaring e1 = null; AST idval; 
 		DECL(out e);
-		liste.Add(e); 
+		astList.Add(e); 
 		while (StartOf(1)) {
 			DECL(out e);
-			liste.Add(e); 
+			astList.Add(e); 
 		}
 		Expect(8);
-		BLOCK(out elist);
-		liste.Add(new ProgSetup(elist)); 
+		BLOCK(out nodeList);
+		astList.Add(new ProgSetup(nodeList)); 
 		Expect(9);
-		BLOCK(out elist);
-		liste.Add(new ProgLoop(elist)); 
+		BLOCK(out nodeList);
+		astList.Add(new ProgLoop(nodeList)); 
 		while (StartOf(1)) {
 			DCL(out e1, out idval);
 			FUNCDECL(out e, e1);
-			liste.Add(e); 
+			astList.Add(e); 
 		}
-		ProgramAST = new Prog(liste); 
+		ProgramAST = new Prog(astList); 
 	}
 
 	void DECL(out AST e) {
