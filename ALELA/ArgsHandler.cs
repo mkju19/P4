@@ -11,8 +11,8 @@ namespace ALELA_Compiler {
         public string[] Args;
         public string InFile, OutFile = "a.ino";
         public bool verbose = true;
-        public bool arduinoCode = false;
-        public bool createFile = false;
+        public bool arduinoCode = true;
+        public bool createFile = true;
         public ArgsHandler(string[] args) {
             Args = args;
             if (Args.Length == 0) {
