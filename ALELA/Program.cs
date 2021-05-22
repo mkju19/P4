@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-
+using ALELA_Compiler.Visitors;
 namespace ALELA_Compiler {
     class Program {
         static void Main(string[] args) {
@@ -19,23 +19,23 @@ namespace ALELA_Compiler {
 
             if (parser.errors.count == 0) {
                 //try {
-                    Visitors.PrettyprintVisitor prettyprint = new Visitors.PrettyprintVisitor();
+                    PrettyprintVisitor prettyprint = new PrettyprintVisitor();
                     if (argsHandler.verbose == true) {
                         parser.ProgramAST.accept(prettyprint);
                         Console.WriteLine(prettyprint.Code);
                         Console.WriteLine("  Pretty Printing successful\n");
                     }
 
-                    Visitors.SymbolTableFilling symbolTable = new Visitors.SymbolTableFilling();
+                    SymbolTableFilling symbolTable = new SymbolTableFilling();
                     parser.ProgramAST.accept(symbolTable);
                     if (argsHandler.verbose == true)  Console.WriteLine(symbolTable.PrintSymbolTable());
                     Console.WriteLine("  Symbol Table filling successful");
 
-                    Visitors.TypeChecker typeChecker = new Visitors.TypeChecker();
+                    TypeChecker typeChecker = new TypeChecker();
                     parser.ProgramAST.accept(typeChecker);
                     Console.WriteLine("  Type Checking successful");
 
-                    Visitors.InitiationChecker initiationChecker = new Visitors.InitiationChecker(typeChecker.StructDic);
+                    InitiationChecker initiationChecker = new InitiationChecker(typeChecker.StructDic);
                     parser.ProgramAST.accept(initiationChecker);
                     Console.WriteLine("  Initiation Checking successful\n");
 
@@ -47,15 +47,16 @@ namespace ALELA_Compiler {
                     }
 
                     if (argsHandler.arduinoCode == true) {
-                        Visitors.CppArduinoCodeGenerator cppArduinoCodeGenerator = new Visitors.CppArduinoCodeGenerator(parser.ProgramAST);
+                        var cppArduinoCodeGenerator = new CppArduinoCodeGenerator(parser.ProgramAST);
                         parser.ProgramAST.accept(cppArduinoCodeGenerator);
                         if (argsHandler.createFile == true) {
-                        string currentPath = Directory.GetCurrentDirectory();
+                            string currentPath = Directory.GetCurrentDirectory();
                             using (FileStream fs = File.Create(Path.Combine(currentPath, argsHandler.OutFile))) {
                                 byte[] info = new UTF8Encoding(true).GetBytes(cppArduinoCodeGenerator.Code);
                                 fs.Write(info, 0, info.Length);
                             }
                         } else Console.WriteLine(cppArduinoCodeGenerator.Code);
+                        
                         Console.WriteLine("\n  Cpp/Arduino Code Generation successful");
                     }
 
