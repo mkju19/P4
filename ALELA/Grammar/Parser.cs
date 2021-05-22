@@ -28,7 +28,7 @@ public class Parser {
 	public Token la;   // lookahead token
 	int errDist = minErrDist;
 
-public Prog ProgramAST;
+	public Prog ProgramAST;
 
 
 
