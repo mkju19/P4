@@ -12,43 +12,46 @@ namespace ALELA_Compiler {
             //string file = "./prog.txt";
             Scanner scanner = new Scanner(file);
             Parser parser = new Parser(scanner);
+            Prog ProgramAST;
+
             STD std = new STD();
             parser.Parse();
             std.AddTo(parser.ProgramAST);
+            ProgramAST = parser.ProgramAST;
             Console.WriteLine($" {parser.errors.count} errors detected\n");
 
             if (parser.errors.count == 0) {
                 //try {
                     PrettyprintVisitor prettyprint = new PrettyprintVisitor();
                     if (argsHandler.verbose == true) {
-                        parser.ProgramAST.accept(prettyprint);
+                        ProgramAST.accept(prettyprint);
                         Console.WriteLine(prettyprint.Code);
                         Console.WriteLine("  Pretty Printing successful\n");
                     }
 
                     SymbolTableFilling symbolTable = new SymbolTableFilling();
-                    parser.ProgramAST.accept(symbolTable);
+                    ProgramAST.accept(symbolTable);
                     if (argsHandler.verbose == true)  Console.WriteLine(symbolTable.PrintSymbolTable());
                     Console.WriteLine("  Symbol Table filling successful");
 
                     TypeChecker typeChecker = new TypeChecker();
-                    parser.ProgramAST.accept(typeChecker);
+                    ProgramAST.accept(typeChecker);
                     Console.WriteLine("  Type Checking successful");
 
                     InitiationChecker initiationChecker = new InitiationChecker(typeChecker.StructDic);
-                    parser.ProgramAST.accept(initiationChecker);
+                    ProgramAST.accept(initiationChecker);
                     Console.WriteLine("  Initiation Checking successful\n");
 
                     if (argsHandler.verbose == true) {
                         prettyprint.Code = "";
-                        parser.ProgramAST.accept(prettyprint);
+                        ProgramAST.accept(prettyprint);
                         Console.WriteLine(prettyprint.Code);
                         Console.WriteLine("  Pretty Printing successful\n");
                     }
 
                     if (argsHandler.arduinoCode == true) {
-                        var cppArduinoCodeGenerator = new CppArduinoCodeGenerator(parser.ProgramAST);
-                        parser.ProgramAST.accept(cppArduinoCodeGenerator);
+                        var cppArduinoCodeGenerator = new CppArduinoCodeGenerator(ProgramAST);
+                        ProgramAST.accept(cppArduinoCodeGenerator);
                         if (argsHandler.createFile == true) {
                             string currentPath = Directory.GetCurrentDirectory();
                             using (FileStream fs = File.Create(Path.Combine(currentPath, argsHandler.OutFile))) {
