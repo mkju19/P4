@@ -302,7 +302,10 @@ namespace ALELA_Compiler.Visitors {
                         emit($"analogRead({pinValue[dot.id.id]});\n");
                         break;
                 }
-            } else if (n.id is DotReferencing dotserial && dotserial.id.type == AST.UART && (dotserial.dotId is SymReferencing dotId && (dotId.id == "print" || dotId.id == "printLine"))) {
+            } else if (n.id is DotReferencing dotserial && 
+                       dotserial.id.type == AST.UART && 
+                      (dotserial.dotId is SymReferencing dotId && 
+                      (dotId.id == "print" || dotId.id == "printLine"))) {
                 if (n.param_list[0] is Expression) {
                     emit($"{serialTempString} = \"\";\n");
                     SerialExpressionPrint(n.param_list[0]);
@@ -384,30 +387,20 @@ namespace ALELA_Compiler.Visitors {
             n.id.accept(this);
             emit($".");
             if (n.id.type == AST.UART && n.dotId is SymReferencing symSerial && symSerial.id == "printLine") {
-                symSerial.id = "println";
-                symSerial.accept(this);
-                symSerial.id = "printLine";
+                emit("println");
             } else if (n.id.type == AST.PIN && n.dotId is SymReferencing symPin) {
                 switch (symPin.id) {
                     case "digitalpower":
-                        symPin.id = "digitalWrite";
-                        symPin.accept(this);
-                        symPin.id = "digitalpower";
+                        emit("digitalWrite");
                         break;
                     case "analogpower":
-                        symPin.id = "analogWrite";
-                        symPin.accept(this);
-                        symPin.id = "analogpower";
+                        emit("analogWrite");
                         break;
                     case "powerValue":
-                        symPin.id = "analogWrite";
-                        symPin.accept(this);
-                        symPin.id = "powerValue";
+                        emit("analogWrite");
                         break;
                     case "analogReadValue":
-                        symPin.id = "analogRead";
-                        symPin.accept(this);
-                        symPin.id = "analogReadValue";
+                        emit("analogRead");
                         break;
                     default:
                         symPin.accept(this);
