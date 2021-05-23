@@ -50,7 +50,7 @@ namespace ALELA_Compiler {
                     }
 
                     if (argsHandler.arduinoCode == true) {
-                        var cppArduinoCodeGenerator = new CppArduinoCodeGenerator(ProgramAST);
+                        var cppArduinoCodeGenerator = new ArduinoCodeGen(ProgramAST);
                         ProgramAST.accept(cppArduinoCodeGenerator);
                         if (argsHandler.createFile == true) {
                             string currentPath = Directory.GetCurrentDirectory();

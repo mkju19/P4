@@ -106,10 +106,10 @@ namespace ALELA_Compiler {
         public override void accept(Visitor v) { v.Visit(this); }
     }
 
-    public class StructDcel : AST {
+    public class StructDecl : AST {
         public AST structType, structId;
         public List<AST> declarings;
-        public StructDcel(AST StructType, List<AST> Declarings) {
+        public StructDecl(AST StructType, List<AST> Declarings) {
             structType = StructType;
             declarings = Declarings;
         }

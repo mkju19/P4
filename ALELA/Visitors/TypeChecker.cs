@@ -94,7 +94,7 @@ namespace ALELA_Compiler.Visitors {
             funcs.Add(n);
         }
 
-        public override void Visit(StructDcel n) {
+        public override void Visit(StructDecl n) {
             n.type = AST.STRUCT;
             string pastStructType = "";
             if (currentStructType != "") pastStructType = currentStructType;
@@ -222,8 +222,8 @@ namespace ALELA_Compiler.Visitors {
             int t = Generalize(n.child.type, m);
             n.child = Convert(n.child, m);
             n.type = t;
-            if (n.child is StructDcel) {
-                StructDcel assStructDcel = n.child as StructDcel;
+            if (n.child is StructDecl) {
+                StructDecl assStructDcel = n.child as StructDecl;
                 SymReferencing strucid = assStructDcel.structId as SymReferencing;
                 SymReferencing structype = assStructDcel.structType as SymReferencing;
                 StructDic.Add(strucid.id, StructDic[structype.id]);

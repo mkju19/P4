@@ -113,7 +113,7 @@ public class Parser {
 	}
 
 	void DECL(out AST e) {
-		SymDeclaring e1; AST e2 = null; StructDcel es = null;
+		SymDeclaring e1; AST e2 = null; StructDecl es = null;
 		AST idval; List<AST> el = new List<AST>(); 
 		DCL(out e1, out idval);
 		if (la.kind == 3 || la.kind == 10 || la.kind == 12) {
@@ -126,7 +126,7 @@ public class Parser {
 					Get();
 					STRUCTDECL(out el);
 				}
-				es = new StructDcel(idval, el); es.structId = structid; 
+				es = new StructDecl(idval, el); es.structId = structid; 
 				e2 = new Assigning(structid, es); e1.id = idofstruct;
 			}
 		}

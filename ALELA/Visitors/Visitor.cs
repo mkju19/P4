@@ -20,7 +20,7 @@ namespace ALELA_Compiler {
 		public abstract void Visit(ListDcl n);
 		public abstract void Visit(Decl n);
 		public abstract void Visit(FuncDecl n);
-		public abstract void Visit(StructDcel n);
+		public abstract void Visit(StructDecl n);
 		public abstract void Visit(StructDef n);
 		public abstract void Visit(SymStatments n);
 		public abstract void Visit(IfStmt n);

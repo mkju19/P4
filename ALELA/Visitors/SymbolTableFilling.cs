@@ -96,7 +96,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void Visit(StructDcel n) {
+        public override void Visit(StructDecl n) {
             foreach (AST ast in n.declarings) {
                 ast.accept(this);
             }

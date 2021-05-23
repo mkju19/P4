@@ -17,7 +17,7 @@ namespace ALELA_Test {
             var structDef6 = new StructDef(new List<AST>() { new IntDcl("pinPower"), new FuncDecl(new VoidDcl("Power"), new List<SymDeclaring>() { new IntDcl("value") }, new List<AST>() { new Assigning(new SymReferencing("pinPower"), new SymReferencing("value")) }, null) });
             structDef6.structType = new SymReferencing("pin");
 
-            var structDcel7 = new StructDcel(new SymReferencing("pin"), new List<AST>() { new Assigning(new SymReferencing("pinPower"), new IntConst("50")) });
+            var structDcel7 = new StructDecl(new SymReferencing("pin"), new List<AST>() { new Assigning(new SymReferencing("pinPower"), new IntConst("50")) });
             structDcel7.structId = new SymReferencing("led");
 
             Prog expected = new Prog(new List<AST>() {

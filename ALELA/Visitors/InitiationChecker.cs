@@ -96,7 +96,7 @@ namespace ALELA_Compiler.Visitors {
             minusScope();
         }
 
-        public override void Visit(StructDcel n) {
+        public override void Visit(StructDecl n) {
             string pastStructType = "";
             if (currentStructType != "") pastStructType = currentStructType;
             SymReferencing current = n.structId as SymReferencing;

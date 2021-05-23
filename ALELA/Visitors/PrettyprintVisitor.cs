@@ -100,7 +100,7 @@ namespace ALELA_Compiler.Visitors {
             emit("}\n");
         }
 
-        public override void Visit(StructDcel n) {
+        public override void Visit(StructDecl n) {
             emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
@@ -226,7 +226,7 @@ namespace ALELA_Compiler.Visitors {
             } else if (n.id is DotReferencing) {
                 n.id.accept(this);
             } else emit($"{n.id} ");
-            if (!(n.child is StructDef || n.child is StructDcel)) emit("= ");
+            if (!(n.child is StructDef || n.child is StructDecl)) emit("= ");
             n.child.accept(this);
             emit(";\n");
         }

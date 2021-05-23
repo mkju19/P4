@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ALELA_Compiler.Visitors {
-    class CppArduinoCodeGenerator : Visitor {
+    class ArduinoCodeGen : Visitor {
         public string Code = "#include <LinkedList.h>\n";
         private Dictionary<string, string> pinValue = new Dictionary<string, string>();
         private string serialTempString = "SerialMonitorTemporaryString";
         
-        public CppArduinoCodeGenerator(Prog n) {
+        public ArduinoCodeGen(Prog n) {
             STD std = new STD();
             std.RemoveFrom(n);
             bool tempExists;
@@ -29,29 +29,29 @@ namespace ALELA_Compiler.Visitors {
             Code += c;
         }
         public override void Visit(Prog n) {
-            foreach (AST ast in n.prog) {
-                ast.accept(this);
+            foreach (AST node in n.prog) {
+                node.accept(this);
             }
         }
 
         public override void Visit(ProgSetup n) {
             emit("void setup () {\n");
-            foreach (AST ast in n.prog) {
-                ast.accept(this);
+            foreach (AST node in n.prog) {
+                node.accept(this);
             }
             emit("}\n");
         }
 
         public override void Visit(ProgLoop n) {
             emit("void loop () {\n");
-            foreach (AST ast in n.prog) {
-                ast.accept(this);
+            foreach (AST node in n.prog) {
+                node.accept(this);
             }
             emit("\n}\n");
         }
 
         public override void Visit(SymDeclaring n) {
-            throw new NotImplementedException();
+            throw new Exception("No type specified in symDeclaring");
         }
 
         public override void Visit(VoidDcl n) {
@@ -120,16 +120,16 @@ namespace ALELA_Compiler.Visitors {
             emit("(");
             if (n.declarings.Count > 0) {
                 SymDeclaring first = n.declarings[0];
-                foreach (SymDeclaring ast in n.declarings) {
-                    if (first != ast) {
+                foreach (SymDeclaring declaration in n.declarings) {
+                    if (first != declaration) {
                         emit(", ");
                     }
-                    ast.accept(this);
+                    declaration.accept(this);
                 }
             }
             emit(") {\n");
-            foreach (AST ast in n.statments) {
-                ast.accept(this);
+            foreach (AST statement in n.statments) {
+                statement.accept(this);
             }
             if (n.returnValue != null) {
                 emit("return ");
@@ -138,20 +138,19 @@ namespace ALELA_Compiler.Visitors {
             emit("}\n");
         }
 
-        public override void Visit(StructDcel n) {
+        public override void Visit(StructDecl n) {
             SymReferencing sym = n.structType as SymReferencing;
-            Code = Code.Remove(Code.Length - $"{sym.id} = ".Length); //TODO check is "struct {sym.id} = " is nessecary
             n.structType.accept(this);
             emit(" ");
             n.structId.accept(this);
             emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
-                foreach (AST ast in n.declarings) {
-                    if (first != ast) {
+                foreach (AST declaration in n.declarings) {
+                    if (first != declaration) {
                         emit(", ");
                     }
-                    Assigning assigning = ast as Assigning;
+                    Assigning assigning = declaration as Assigning;
                     assigning.child.accept(this);
                     //Code = Code.Remove(Code.Length - 2);
                 }
@@ -163,27 +162,27 @@ namespace ALELA_Compiler.Visitors {
             emit("{\n");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
-                foreach (AST ast in n.declarings) {
-                    if (first != ast) {
+                foreach (AST declaration in n.declarings) {
+                    if (first != declaration) {
                         emit("\n");
                     }
-                    ast.accept(this);
-                    if (ast is SymDeclaring) emit(";");
+                    declaration.accept(this);
+                    if (declaration is SymDeclaring) emit(";");
                 }
             }
             emit("}");
         }
 
         public override void Visit(SymStatments n) {
-            throw new NotImplementedException();
+            throw new Exception("No statement specified in SymStatement");
         }
 
         public override void Visit(IfStmt n) {
             emit("if(");
             n.logi_expr.accept(this);
             emit(") {\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             emit("}\n");
             if (n.elseIF_Eles is IfStmt) {
@@ -197,8 +196,8 @@ namespace ALELA_Compiler.Visitors {
         }
 
         public override void Visit(ElseStmt n) {
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
         }
 
@@ -206,8 +205,8 @@ namespace ALELA_Compiler.Visitors {
             emit("while(");
             n.logi_expr.accept(this);
             emit(") {\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             emit("}\n");
         }
@@ -220,32 +219,32 @@ namespace ALELA_Compiler.Visitors {
             n.stm3.accept(this);
             if (Code[Code.Length - 2] == ';') Code = Code.Remove(Code.Length - 2);
             emit(") {\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             emit("}\n");
         }
 
         public override void Visit(SwitchStmt n) {
             emit($"switch( {n.id} )" + "{\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             emit("}\n");
         }
 
         public override void Visit(SwitchCase n) {
             emit($"case {n.id} :\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             //emit("}\n");
         }
 
         public override void Visit(SwitchDefault n) {
             emit($"default :\n");
-            foreach (AST ast in n.stmt_list) {
-                ast.accept(this);
+            foreach (AST stmt in n.stmt_list) {
+                stmt.accept(this);
             }
             //emit("}\n");
         }
@@ -266,12 +265,12 @@ namespace ALELA_Compiler.Visitors {
                         }
                         emit("pinMode(");
                         AST first = n.param_list[0];
-                        foreach (AST ast in n.param_list) {
-                            if (first != ast) {
+                        foreach (AST param in n.param_list) {
+                            if (first != param) {
                                 emit(", ");
                             }
-                            ast.accept(this);
-                            IsFuncSTM(ast);
+                            param.accept(this);
+                            IsFuncSTM(param);
                         }
                         emit(");\n");
                         break;
@@ -324,12 +323,12 @@ namespace ALELA_Compiler.Visitors {
                 emit($"(");
                 if (n.param_list.Count > 0) {
                     AST first = n.param_list[0];
-                    foreach (AST ast in n.param_list) {
-                        if (first != ast) {
+                    foreach (AST param in n.param_list) {
+                        if (first != param) {
                             emit(", ");
                         }
-                        ast.accept(this);
-                        IsFuncSTM(ast);
+                        param.accept(this);
+                        IsFuncSTM(param);
                     }
                 }
                 emit(");\n");
@@ -367,8 +366,11 @@ namespace ALELA_Compiler.Visitors {
             } else if (n.id is DotReferencing) {
                 n.id.accept(this);
             } else emit($"{n.id} = ");*/
-            n.id.accept(this);
-            if (!(n.child is StructDef)) emit($" = ");
+            if (!(n.child is StructDecl)){
+                n.id.accept(this);
+                if (!(n.child is StructDef)) emit($" = ");
+            }
+
             n.child.accept(this);
             IsFuncSTM(n.child);
             emit(";\n");
@@ -443,11 +445,11 @@ namespace ALELA_Compiler.Visitors {
             emit("{");
             if (n.declarings.Count > 0) {
                 AST first = n.declarings[0];
-                foreach (AST ast in n.declarings) {
-                    if (first != ast) {
+                foreach (AST declaration in n.declarings) {
+                    if (first != declaration) {
                         emit(", ");
                     }
-                    ast.accept(this);
+                    declaration.accept(this);
                 }
             }
             emit("}");

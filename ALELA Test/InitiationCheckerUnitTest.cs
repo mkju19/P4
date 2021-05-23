@@ -111,7 +111,7 @@ namespace ALELA_Test {
                     };
                 Assert.IsTrue(ObjectCompare(actualSym, expectedSym) && ObjectCompare(actualStruct, expectedStruct), "StructDef InitiationCheck faild");
 
-                var structDcel = new StructDcel(new SymReferencing("pin"), new List<AST>() { new Assigning(new SymReferencing("pinPower"), new IntConst("50")) });
+                var structDcel = new StructDecl(new SymReferencing("pin"), new List<AST>() { new Assigning(new SymReferencing("pinPower"), new IntConst("50")) });
                 structDcel.structId = new SymReferencing("led");
                 assigning = new Assigning(new SymReferencing("led"), structDcel);
                 assigning.accept(initiationChecker);
