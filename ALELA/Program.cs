@@ -21,7 +21,7 @@ namespace ALELA_Compiler {
             Console.WriteLine($" {parser.errors.count} errors detected\n");
 
             if (parser.errors.count == 0) {
-                //try {
+                try {
                     PrettyprintVisitor prettyprint = new PrettyprintVisitor();
                     if (argsHandler.verbose == true) {
                         ProgramAST.accept(prettyprint);
@@ -65,9 +65,9 @@ namespace ALELA_Compiler {
 
                     Console.WriteLine(initiationChecker.UnusedVariables());
 
-                /*} catch (Exception e) {
+                } catch (Exception e) {
                     Console.WriteLine(e.Message);
-                }*/
+                }
 
             }
         }
